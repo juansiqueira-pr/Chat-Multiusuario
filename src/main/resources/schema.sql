@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS mensagem (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    remetente VARCHAR(30) NOT NULL,
+    conteudo VARCHAR(500) NOT NULL,
+    horario TIMESTAMP NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_mensagem_horario ON mensagem(horario);

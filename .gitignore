@@ -1,0 +1,9 @@
+target/
+data/
+*.db
+*.mv.db
+*.trace.db
+.idea/
+*.class
+.vscode/*
+!.vscode/launch.json
