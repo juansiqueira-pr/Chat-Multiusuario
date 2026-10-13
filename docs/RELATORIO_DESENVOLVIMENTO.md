@@ -20,7 +20,7 @@
 | `ClienteHandler.enviar()` | threads que fazem broadcast | linhas de duas mensagens intercaladas | método `synchronized` | planejado |
 | `ChatService` (salvar+broadcast; conectar+histórico) | todas as threads de cliente | ordem do banco diferente da exibida; perder mensagem ao entrar | `ordemLock` | planejado |
 | `Connection` JDBC | threads que salvam/consultam | uso concorrente de uma conexão | uma `Connection` por operação | planejado |
-| `Mensagem`, `Usuario` | todas | nenhum | imutáveis | planejado |
+| `Mensagem`, `Usuario` | todas | nenhum | imutáveis | implementado; testes do model |
 
 ### 1.3 Race conditions identificadas
 
@@ -80,3 +80,13 @@ Formato de cada entrada (copie e preencha; mantenha curto):
 - **Testes:** 5 unitários passando; 0 integração. A primeira execução falhou como esperado porque `Usuario` ainda não existia.
 - **Decisão / concorrência:** nomes comparam-se usando `Locale.ROOT`, evitando diferenças dependentes da localidade. Ainda não há estado compartilhado implementado.
 - **Próximo passo:** Fase 3 — modelar e testar `Mensagem`.
+
+### 2026-10-13 · Fase 3 — Modelo Mensagem
+
+- **Adicionado:** testes para validação, formatação, conteúdo aparado, cópia com ID e imutabilidade; `Mensagem`, `MensagemInvalidaException`.
+- **Alterado:** `docs/ESTADO.md` e painel de objetos imutáveis.
+- **Removido:** nada.
+- **Arquivos:** `src/main/java/br/unicesumar/chat/model/Mensagem.java`, `MensagemInvalidaException.java`, `src/test/java/br/unicesumar/chat/model/MensagemTest.java`, `docs/ESTADO.md`, `docs/RELATORIO_DESENVOLVIMENTO.md`.
+- **Testes:** 10 unitários passando; 0 integração. A primeira execução falhou como esperado antes das classes de mensagem.
+- **Decisão / concorrência:** `Mensagem` e `Usuario` são imutáveis, portanto podem ser compartilhados sem sincronização. Horário é recebido pelo construtor e não gerado internamente.
+- **Próximo passo:** Fase 4 — interfaces de persistência e implementação JDBC.
