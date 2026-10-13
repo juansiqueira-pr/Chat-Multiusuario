@@ -2,10 +2,10 @@
 
 > Mapa compacto para o agente **não precisar varrer o repositório**. **Sobrescreva** a cada tarefa (não acumule histórico aqui; o histórico vai em `RELATORIO_DESENVOLVIMENTO.md`). Mantenha em até ~100 linhas.
 
-**Atualizado em:** 2026-10-13 · **Fase atual:** 3 concluída (modelo Mensagem)
+**Atualizado em:** 2026-10-13 · **Fase atual:** 4 concluída (persistência JDBC)
 **Marco "núcleo obrigatório completo":** ⬜ não atingido (previsto no cronograma para 02/11)
-**Testes:** unitários 10 · integração 0 · último resultado: `mvn -q test` verde.
-**Próximo passo:** Fase 4 — contratos de persistência, repositório em memória e integração JDBC.
+**Testes:** unitários 13 · integração 2 · último resultado: `mvn -q test` verde.
+**Próximo passo:** Fase 5 — `FakeConexao`, `ClientRegistry` e `ChatService` com teste concorrente.
 
 Legenda: ⬜ pendente · 🟡 em andamento · ✅ pronto e testado
 
@@ -18,12 +18,12 @@ Legenda: ⬜ pendente · 🟡 em andamento · ✅ pronto e testado
 | 3 | `ClienteHandler implements Runnable` | server/ClienteHandler | ⬜ |
 | 4 | Coleção sincronizada de clientes | service/ClientRegistry | ⬜ |
 | 5 | Broadcast para todos | service/ChatService | ⬜ |
-| 6 | `Mensagem` (remetente, conteúdo, horário) | model/Mensagem | ⬜ |
-| 7 | Persistência JDBC | persistence/jdbc/JdbcMensagemRepository | ⬜ |
-| 8 | Repository isolando o SQL | persistence/MensagemRepository | ⬜ |
+| 6 | `Mensagem` (remetente, conteúdo, horário) | model/Mensagem | ✅ |
+| 7 | Persistência JDBC | persistence/jdbc/JdbcMensagemRepository | ✅ |
+| 8 | Repository isolando o SQL | persistence/MensagemRepository | ✅ |
 | 9 | Histórico ao conectar | service/ChatService.conectar | ⬜ |
 | 10 | Desconexão segura | server/ClienteHandler (finally) + ChatService.desconectar | ⬜ |
-| 11 | ≥ 5 testes JUnit sem rede real | src/test/... | ⬜ |
+| 11 | ≥ 5 testes JUnit sem rede real | src/test/... | ✅ |
 | 12 | Código em pacotes | todos | ⬜ |
 
 Entregáveis: código ⬜ · `schema.sql` ⬜ · README ⬜ · relatório final ⬜ · vídeo ⬜ (feito pelo aluno)
@@ -35,11 +35,11 @@ Entregáveis: código ⬜ · `schema.sql` ⬜ · README ⬜ · relatório final 
 | model/Usuario | Nome validado; imutável; equals/hashCode sem diferenciar maiúsculas | ✅ |
 | model/Mensagem | Remetente, conteúdo, horário; valida; `formatar()`; `comId(Long)` | ✅ |
 | model/MensagemInvalidaException, UsuarioInvalidoException | Erros de negócio (checked) | ✅ |
-| persistence/MensagemRepository | Contrato: `salvar`, `buscarUltimas(n)` | ⬜ |
-| persistence/PersistenciaException | Falha de persistência (runtime) | ⬜ |
-| persistence/jdbc/ConnectionFactory | Abre uma `Connection` por operação | ⬜ |
-| persistence/jdbc/InicializadorSchema | Executa `schema.sql` na inicialização | ⬜ |
-| persistence/jdbc/JdbcMensagemRepository | Único lugar com SQL | ⬜ |
+| persistence/MensagemRepository | Contrato: `salvar`, `buscarUltimas(n)` | ✅ |
+| persistence/PersistenciaException | Falha de persistência (runtime) | ✅ |
+| persistence/jdbc/ConnectionFactory | Abre uma `Connection` por operação | ✅ |
+| persistence/jdbc/InicializadorSchema | Executa `schema.sql` na inicialização | ✅ |
+| persistence/jdbc/JdbcMensagemRepository | Único lugar com SQL | ✅ |
 | service/ConexaoCliente | Abstração de quem recebe texto: `getUsuario`, `enviar` | ⬜ |
 | service/FalhaEnvioException, NomeEmUsoException | Falha de envio (runtime) / nome em uso (checked) | ⬜ |
 | service/ClientRegistry | Coleção compartilhada e thread-safe de conexões | ⬜ |
@@ -50,7 +50,7 @@ Entregáveis: código ⬜ · `schema.sql` ⬜ · README ⬜ · relatório final 
 | client/ClienteChat | Cliente de console com duas threads (teclado e socket) | ⬜ |
 | config/Config | Lê `chat.properties` com valores padrão | ⬜ |
 | resources/schema.sql, chat.properties | Script da tabela; configuração | ✅ |
-| test/support/InMemoryMensagemRepository, FakeConexao | Dublês de teste | ⬜ |
+| test/support/InMemoryMensagemRepository, FakeConexao | Dublês de teste | 🟡 |
 
 ## Decisões fixas
 

@@ -19,7 +19,7 @@
 | `ClientRegistry` (lista de conexões) | todas as threads de cliente | modificação durante o broadcast; nome duplicado | `CopyOnWriteArrayList` + `adicionar` atômico + `snapshot()` | planejado |
 | `ClienteHandler.enviar()` | threads que fazem broadcast | linhas de duas mensagens intercaladas | método `synchronized` | planejado |
 | `ChatService` (salvar+broadcast; conectar+histórico) | todas as threads de cliente | ordem do banco diferente da exibida; perder mensagem ao entrar | `ordemLock` | planejado |
-| `Connection` JDBC | threads que salvam/consultam | uso concorrente de uma conexão | uma `Connection` por operação | planejado |
+| `Connection` JDBC | threads que salvam/consultam | uso concorrente de uma conexão | uma `Connection` por operação | implementado em `JdbcMensagemRepository` |
 | `Mensagem`, `Usuario` | todas | nenhum | imutáveis | implementado; testes do model |
 
 ### 1.3 Race conditions identificadas
@@ -90,3 +90,13 @@ Formato de cada entrada (copie e preencha; mantenha curto):
 - **Testes:** 10 unitários passando; 0 integração. A primeira execução falhou como esperado antes das classes de mensagem.
 - **Decisão / concorrência:** `Mensagem` e `Usuario` são imutáveis, portanto podem ser compartilhados sem sincronização. Horário é recebido pelo construtor e não gerado internamente.
 - **Próximo passo:** Fase 4 — interfaces de persistência e implementação JDBC.
+
+### 2026-10-13 · Fase 4 — Persistência JDBC
+
+- **Adicionado:** contrato `MensagemRepository`, `PersistenciaException`, repositório de teste em memória com `AtomicLong`, fábrica de conexões, inicializador do schema e repository JDBC; testes unitários e integração H2.
+- **Alterado:** `docs/ESTADO.md` marca requisitos 6, 7, 8 e 11 como concluídos.
+- **Removido:** nada.
+- **Arquivos:** `src/main/java/br/unicesumar/chat/persistence/**`, `src/main/java/br/unicesumar/chat/persistence/jdbc/**`, `src/test/java/br/unicesumar/chat/support/**`, `src/test/java/br/unicesumar/chat/integracao/JdbcMensagemRepositoryIntegracaoTest.java`, `docs/ESTADO.md`, `docs/RELATORIO_DESENVOLVIMENTO.md`.
+- **Testes:** 13 unitários e 2 de integração H2 passando; o teste JDBC usa URL com UUID, inicializa o schema de modo idempotente e limpa a tabela em cada preparação. `rg -l "java.sql" src/main` lista só `persistence/jdbc`.
+- **Decisão / concorrência:** cada operação abre e fecha sua própria `Connection` com try-with-resources; SQL fica em `persistence.jdbc`. O repositório em memória sincroniza suas operações e gera IDs com `AtomicLong`.
+- **Próximo passo:** Fase 5 — registry, abstração de conexão e regras concorrentes do serviço.
