@@ -16,9 +16,9 @@
 
 | Objeto | Quem acessa | Risco | Proteção | Situação |
 |---|---|---|---|---|
-| `ClientRegistry` (lista de conexões) | todas as threads de cliente | modificação durante o broadcast; nome duplicado | `CopyOnWriteArrayList` + `adicionar` atômico + `snapshot()` | planejado |
-| `ClienteHandler.enviar()` | threads que fazem broadcast | linhas de duas mensagens intercaladas | método `synchronized` | planejado |
-| `ChatService` (salvar+broadcast; conectar+histórico) | todas as threads de cliente | ordem do banco diferente da exibida; perder mensagem ao entrar | `ordemLock` | planejado |
+| `ClientRegistry` (lista de conexões) | todas as threads de cliente | modificação durante o broadcast; nome duplicado | `CopyOnWriteArrayList` + `adicionar`/`remover` atômicos + `snapshot()` | implementado; `ClientRegistryTest` |
+| `ClienteHandler.enviar()` | threads que fazem broadcast | linhas de duas mensagens intercaladas | método `synchronized` | planejado para Fase 6 |
+| `ChatService` (salvar+broadcast; conectar+histórico) | todas as threads de cliente | ordem do banco diferente da exibida; perder mensagem ao entrar | `ordemLock` | implementado; `ChatServiceTest` |
 | `Connection` JDBC | threads que salvam/consultam | uso concorrente de uma conexão | uma `Connection` por operação | implementado em `JdbcMensagemRepository` |
 | `Mensagem`, `Usuario` | todas | nenhum | imutáveis | implementado; testes do model |
 
@@ -26,7 +26,8 @@
 
 | # | Situação | Como ocorreria | Como foi evitada | Teste que comprova |
 |---|---|---|---|---|
-| — | *(nenhuma registrada ainda)* | | | |
+| 1 | Duas conexões tentam registrar o mesmo nome ao mesmo tempo | ambas poderiam passar na verificação e aparecer online com o mesmo nome | `adicionar` e `remover` são atômicos; comparação usa `Usuario.equals` | `ClientRegistryTest.adicaoConcorrenteDoMesmoNomeEAtomica` |
+| 2 | Alterações do registry coincidem com broadcast | iteração direta da lista poderia lançar exceção ou pular uma conexão estável | `CopyOnWriteArrayList`; broadcast percorre `snapshot()` | `ChatServiceTest.concorrenciaEntreRegistroRemocaoEBroadcastNaoPerdeLinhasNoClienteEstavel` |
 
 ### 1.4 Extras implementados e fora do escopo
 
@@ -100,3 +101,13 @@ Formato de cada entrada (copie e preencha; mantenha curto):
 - **Testes:** 13 unitários e 2 de integração H2 passando; o teste JDBC usa URL com UUID, inicializa o schema de modo idempotente e limpa a tabela em cada preparação. `rg -l "java.sql" src/main` lista só `persistence/jdbc`.
 - **Decisão / concorrência:** cada operação abre e fecha sua própria `Connection` com try-with-resources; SQL fica em `persistence.jdbc`. O repositório em memória sincroniza suas operações e gera IDs com `AtomicLong`.
 - **Próximo passo:** Fase 5 — registry, abstração de conexão e regras concorrentes do serviço.
+
+### 2026-10-13 · Fase 5 — Registry e serviço de chat
+
+- **Adicionado:** `ConexaoCliente`, exceções de serviço, `ClientRegistry`, `ChatService`, `FakeConexao`, testes do registry e serviço com concorrência.
+- **Alterado:** painel 1.2/1.3 registra objetos protegidos e duas races com seus testes; `docs/ESTADO.md` atualiza requisitos 4, 5, 9 e serviço.
+- **Removido:** nada.
+- **Arquivos:** `src/main/java/br/unicesumar/chat/service/**`, `src/test/java/br/unicesumar/chat/service/**`, `src/test/java/br/unicesumar/chat/support/FakeConexao.java`, `docs/ESTADO.md`, `docs/RELATORIO_DESENVOLVIMENTO.md`.
+- **Testes:** 24 unitários e 2 de integração passando. O teste concorrente usa 6 workers, `ExecutorService` e `CountDownLatch`, sem `Thread.sleep`; cada linha chega ao cliente estável.
+- **Decisão / concorrência:** `ordemLock` protege persistir+broadcast, conectar+histórico e desconectar+aviso. O broadcast usa snapshot; falhas removem a conexão e são registradas com `Logger`.
+- **Próximo passo:** Fase 6 — protocolo, configuração e conexão TCP do servidor.
