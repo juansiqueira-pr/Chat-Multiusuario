@@ -23,7 +23,7 @@ public final class Servidor {
     private final Set<ClienteHandler> handlersAtivos = ConcurrentHashMap.newKeySet();
     private final AtomicLong sequenciaClientes = new AtomicLong();
     private final Object cicloLock = new Object();
-    private final Logger logger = Logger.getLogger(Servidor.class.getName());
+    private final Logger registrador = Logger.getLogger(Servidor.class.getName());
     private volatile ServerSocket socketServidor;
     private volatile boolean encerrando;
 
@@ -68,7 +68,7 @@ public final class Servidor {
             try {
                 atual.close();
             } catch (IOException excecao) {
-                logger.log(Level.WARNING, "Falha ao fechar o socket servidor.", excecao);
+                registrador.log(Level.WARNING, "Falha ao fechar o socket servidor.", excecao);
             }
         }
         for (ClienteHandler handler : handlersAtivos.toArray(ClienteHandler[]::new)) {
@@ -83,7 +83,7 @@ public final class Servidor {
                 socketCliente = socketAtual.accept();
             } catch (IOException excecao) {
                 if (!encerrando) {
-                    logger.log(Level.WARNING, "Falha ao aceitar conexão de cliente.", excecao);
+                    registrador.log(Level.WARNING, "Falha ao aceitar conexão de cliente.", excecao);
                 }
                 return;
             }
@@ -102,7 +102,7 @@ public final class Servidor {
                 } catch (RuntimeException excecao) {
                     handlersAtivos.remove(handler);
                     handler.fechar();
-                    logger.log(Level.SEVERE, "Não foi possível iniciar a thread do cliente.", excecao);
+                    registrador.log(Level.SEVERE, "Não foi possível iniciar a thread do cliente.", excecao);
                 }
             }
         }
@@ -112,7 +112,7 @@ public final class Servidor {
         try {
             socket.close();
         } catch (IOException excecao) {
-            logger.log(Level.WARNING, "Falha ao fechar conexão aceita durante a parada.", excecao);
+            registrador.log(Level.WARNING, "Falha ao fechar conexão aceita durante a parada.", excecao);
         }
     }
 

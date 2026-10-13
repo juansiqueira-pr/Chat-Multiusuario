@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Servidor",
+      "request": "launch",
+      "mainClass": "br.unicesumar.chat.server.Servidor",
+      "projectName": "chat-multiusuario",
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "java",
+      "name": "Cliente",
+      "request": "launch",
+      "mainClass": "br.unicesumar.chat.client.ClienteChat",
+      "projectName": "chat-multiusuario",
+      "args": "localhost 5555 ana",
+      "console": "integratedTerminal"
+    }
+  ]
+}

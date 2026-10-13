@@ -2,31 +2,42 @@
 
 > Mapa compacto para o agente **não precisar varrer o repositório**. **Sobrescreva** a cada tarefa (não acumule histórico aqui; o histórico vai em `RELATORIO_DESENVOLVIMENTO.md`). Mantenha em até ~100 linhas.
 
-**Atualizado em:** 2026-10-13 · **Fase atual:** 6 concluída (protocolo e servidor TCP)
-**Marco "núcleo obrigatório completo":** ⬜ não atingido (previsto no cronograma para 02/11)
-**Testes:** unitários 30 · integração 2 · último resultado: `mvn -q test` verde.
-**Próximo passo:** Fase 7 — cliente de console, integração TCP, documentação e validação final.
+**Atualizado em:** 2026-10-13 · **Fase atual:** 7 concluída (cliente, integração e documentação)
+**Marco "núcleo obrigatório completo":** ✅ atingido
+**Testes:** unitários 31 · integração 7 · `mvn -q test` verde em 3 execuções seguidas.
+**Próximo passo:** gravar o vídeo de demonstração (atividade do aluno); nenhum código pendente.
 
 Legenda: ⬜ pendente · 🟡 em andamento · ✅ pronto e testado
 
 ## Requisitos obrigatórios
 
-| # | Requisito | Onde | Status |
+| # | Requisito | Evidência (classe/teste) | Status |
 |---|---|---|---|
-| 1 | `Servidor` com `ServerSocket` e laço `accept()` | server/Servidor | ✅ |
-| 2 | Uma thread por conexão | server/Servidor | ✅ |
-| 3 | `ClienteHandler implements Runnable` | server/ClienteHandler | ✅ |
-| 4 | Coleção sincronizada de clientes | service/ClientRegistry | ✅ |
-| 5 | Broadcast para todos | service/ChatService | ✅ |
-| 6 | `Mensagem` (remetente, conteúdo, horário) | model/Mensagem | ✅ |
-| 7 | Persistência JDBC | persistence/jdbc/JdbcMensagemRepository | ✅ |
-| 8 | Repository isolando o SQL | persistence/MensagemRepository | ✅ |
-| 9 | Histórico ao conectar | service/ChatService.conectar | ✅ |
-| 10 | Desconexão segura | server/ClienteHandler (finally) + ChatService.desconectar | ✅ |
-| 11 | ≥ 5 testes JUnit sem rede real | src/test/... | ✅ |
-| 12 | Código em pacotes | todos | ⬜ |
+| 1 | `Servidor` com `ServerSocket` e `accept()` | `Servidor`; `ServidorIntegracaoTest` | ✅ |
+| 2 | Uma thread por conexão | `Servidor` (`cliente-N`); integração TCP | ✅ |
+| 3 | `ClienteHandler implements Runnable` | `ClienteHandler`; integração TCP | ✅ |
+| 4 | Coleção sincronizada de clientes | `ClientRegistry`; `ClientRegistryTest` | ✅ |
+| 5 | Broadcast para todos | `ChatService`; `ChatServiceTest`, `ServidorIntegracaoTest` | ✅ |
+| 6 | `Mensagem` (remetente, conteúdo, horário) | `Mensagem`; `MensagemTest` | ✅ |
+| 7 | Persistência JDBC | `JdbcMensagemRepository`; `JdbcMensagemRepositoryIntegracaoTest` | ✅ |
+| 8 | Repository isola o SQL | `MensagemRepository`; `ArquiteturaTest` | ✅ |
+| 9 | Histórico ao conectar | `ChatService.conectar`; unitário e integração TCP | ✅ |
+| 10 | Desconexão segura | `ClienteHandler.finally`; cenário abrupto TCP | ✅ |
+| 11 | ≥ 5 testes JUnit sem rede real | 31 testes unitários/arquitetura | ✅ |
+| 12 | Código organizado em pacotes | pacotes `br.unicesumar.chat`; `ArquiteturaTest` | ✅ |
 
-Entregáveis: código ⬜ · `schema.sql` ⬜ · README ⬜ · relatório final ⬜ · vídeo ⬜ (feito pelo aluno)
+Entregáveis: código ✅ · `schema.sql` ✅ · README ✅ · relatório final ✅ · vídeo ⬜ (feito pelo aluno)
+
+## Rubrica de 5,0 pontos — evidências
+
+| Critério | Pontos | Evidência |
+|---|---:|---|
+| Múltiplos clientes simultâneos | 1,3 | `Servidor`, `ClienteHandler`, integração TCP |
+| Broadcast ordenado e seguro | 1,2 | `ChatServiceTest`, teste concorrente e integração de 3 clientes |
+| Persistência JDBC | 1,0 | `JdbcMensagemRepositoryIntegracaoTest` |
+| Pacotes e responsabilidades | 0,5 | `ArquiteturaTest` |
+| Testes unitários de lógica | 0,5 | 31 unitários/arquitetura; sem rede real |
+| Organização e relatório | 0,5 | README, estado e relatório final |
 
 ## Mapa de classes (`src/main/java/br/unicesumar/chat/...`)
 

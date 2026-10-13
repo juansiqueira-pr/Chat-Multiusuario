@@ -26,7 +26,7 @@ public final class ClienteHandler implements Runnable, ConexaoCliente {
     private final ChatService servico;
     private final Protocolo protocolo = new Protocolo();
     private final Consumer<ClienteHandler> aoEncerrar;
-    private final Logger logger = Logger.getLogger(ClienteHandler.class.getName());
+    private final Logger registrador = Logger.getLogger(ClienteHandler.class.getName());
     private volatile Usuario usuario;
     private volatile PrintWriter saida;
 
@@ -50,10 +50,10 @@ public final class ClienteHandler implements Runnable, ConexaoCliente {
             }
         } catch (IOException excecao) {
             if (!socket.isClosed()) {
-                logger.log(Level.WARNING, "Falha de leitura na conexão do cliente.", excecao);
+                registrador.log(Level.WARNING, "Falha de leitura na conexão do cliente.", excecao);
             }
         } catch (RuntimeException excecao) {
-            logger.log(Level.SEVERE, "Falha inesperada no atendimento de um cliente.", excecao);
+            registrador.log(Level.SEVERE, "Falha inesperada no atendimento de um cliente.", excecao);
         } finally {
             if (usuario != null) {
                 servico.desconectar(this);
@@ -62,7 +62,7 @@ public final class ClienteHandler implements Runnable, ConexaoCliente {
             try {
                 aoEncerrar.accept(this);
             } catch (RuntimeException excecao) {
-                logger.log(Level.WARNING, "Não foi possível remover o handler encerrado.", excecao);
+                registrador.log(Level.WARNING, "Não foi possível remover o handler encerrado.", excecao);
             }
         }
     }
@@ -92,7 +92,7 @@ public final class ClienteHandler implements Runnable, ConexaoCliente {
         try {
             socket.close();
         } catch (IOException excecao) {
-            logger.log(Level.WARNING, "Falha ao fechar socket do cliente.", excecao);
+            registrador.log(Level.WARNING, "Falha ao fechar socket do cliente.", excecao);
         }
     }
 

@@ -17,7 +17,10 @@
 | Objeto | Quem acessa | Risco | Proteção | Situação |
 |---|---|---|---|---|
 | `ClientRegistry` (lista de conexões) | todas as threads de cliente | modificação durante o broadcast; nome duplicado | `CopyOnWriteArrayList` + `adicionar`/`remover` atômicos + `snapshot()` | implementado; `ClientRegistryTest` |
-| `ClienteHandler.enviar()` | threads que fazem broadcast | linhas de duas mensagens intercaladas | método `synchronized` e UTF-8 | implementado; integração TCP prevista na Fase 7 |
+| `Servidor` (socket e ciclo de vida) | thread accept e thread que chama `parar()` | aceitar conexão durante ou após a parada | estado `volatile`; transições protegidas por `cicloLock` | implementado; integração TCP |
+| `Servidor.handlersAtivos` | accept, parada e handlers | coleção alterada durante encerramento | conjunto `ConcurrentHashMap.newKeySet()` | implementado; `ServidorIntegracaoTest` |
+| `ClienteHandler.usuario` / `saida` / `enviar()` | handler, serviço e broadcasts | referência não publicada ou linhas intercaladas | referências `volatile`; envio `synchronized` e UTF-8 | implementado; integração TCP |
+| `ClienteChat.socket` | thread do teclado e thread receptora | encerramento enquanto a outra direção está em uso | entrada e saída têm um único escritor cada; fechar socket interrompe ambas; falhas são tratadas | implementado; servidor real validado |
 | `ChatService` (salvar+broadcast; conectar+histórico) | todas as threads de cliente | ordem do banco diferente da exibida; perder mensagem ao entrar | `ordemLock` | implementado; `ChatServiceTest` |
 | `Connection` JDBC | threads que salvam/consultam | uso concorrente de uma conexão | uma `Connection` por operação | implementado em `JdbcMensagemRepository` |
 | `Mensagem`, `Usuario` | todas | nenhum | imutáveis | implementado; testes do model |
@@ -121,3 +124,13 @@ Formato de cada entrada (copie e preencha; mantenha curto):
 - **Testes:** 30 unitários e 2 de integração JDBC passando; cobertura TCP real fica para a Fase 7.
 - **Decisão / concorrência:** servidor guarda handlers em `ConcurrentHashMap.newKeySet()`, fecha socket e handlers ao parar e cria `Thread(handler, "cliente-N")`; a escrita de cada handler é sincronizada.
 - **Próximo passo:** Fase 7 — cliente console, cenários com sockets reais, README e relatório final.
+
+### 2026-10-13 · Fase 7 — Cliente, integração e entregáveis
+
+- **Adicionado:** `ClienteChat` com duas threads UTF-8, cinco cenários TCP reais, `ArquiteturaTest`, README, launch configurations e relatório final com diagramas.
+- **Alterado:** `docs/ESTADO.md` marca núcleo completo, requisitos e rubrica com evidências; painel 1.2 inclui estado compartilhado do cliente de console.
+- **Removido:** nada.
+- **Arquivos:** `src/main/java/br/unicesumar/chat/client/ClienteChat.java`, `src/test/java/br/unicesumar/chat/integracao/ServidorIntegracaoTest.java`, `src/test/java/br/unicesumar/chat/support/ArquiteturaTest.java`, `README.md`, `.vscode/launch.json`, `docs/ESTADO.md`, `docs/RELATORIO_FINAL.md`, `docs/RELATORIO_DESENVOLVIMENTO.md`.
+- **Testes:** 31 unitários/arquitetura e 7 integrações (2 JDBC + 5 TCP), todos passando; `mvn -q test` passou três vezes seguidas. `mvn -q package` compilou e passou; `mvn -q exec:java` iniciou servidor em segundo plano, porta 5555 confirmada e processo encerrado.
+- **Decisão / concorrência:** nenhum plugin exec foi declarado no `pom.xml`, pois o comando de execução funcionou. `mvn -q clean package` não removeu `target/classes/client` no Windows por arquivo em uso; o README documenta `mvn -q package`, que foi validado.
+- **Próximo passo:** núcleo concluído; gravação do vídeo de demonstração pelo aluno.

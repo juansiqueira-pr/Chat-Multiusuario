@@ -22,7 +22,7 @@ public final class ChatService {
     private final Clock relogio;
     private final int tamanhoHistorico;
     private final Object ordemLock = new Object();
-    private final Logger logger = Logger.getLogger(ChatService.class.getName());
+    private final Logger registrador = Logger.getLogger(ChatService.class.getName());
 
     /** Cria o serviço com repositório, registry, relógio e limite de histórico. */
     public ChatService(MensagemRepository repositorio, ClientRegistry registro, Clock relogio,
@@ -45,7 +45,7 @@ public final class ChatService {
                 }
             } catch (FalhaEnvioException excecao) {
                 registro.remover(cliente);
-                logger.log(Level.WARNING, "Cliente falhou ao receber o histórico.", excecao);
+                registrador.log(Level.WARNING, "Cliente falhou ao receber o histórico.", excecao);
                 return;
             }
             broadcast(PREFIXO_SISTEMA + cliente.getUsuario().getNome() + " entrou");
@@ -79,7 +79,7 @@ public final class ChatService {
                     cliente.enviar(linha);
                 } catch (FalhaEnvioException excecao) {
                     registro.remover(cliente);
-                    logger.log(Level.WARNING,
+                    registrador.log(Level.WARNING,
                             "Cliente removido após falha de envio: " + cliente.getUsuario().getNome(), excecao);
                 }
             }
