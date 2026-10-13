@@ -17,7 +17,7 @@
 | Objeto | Quem acessa | Risco | Proteção | Situação |
 |---|---|---|---|---|
 | `ClientRegistry` (lista de conexões) | todas as threads de cliente | modificação durante o broadcast; nome duplicado | `CopyOnWriteArrayList` + `adicionar`/`remover` atômicos + `snapshot()` | implementado; `ClientRegistryTest` |
-| `ClienteHandler.enviar()` | threads que fazem broadcast | linhas de duas mensagens intercaladas | método `synchronized` | planejado para Fase 6 |
+| `ClienteHandler.enviar()` | threads que fazem broadcast | linhas de duas mensagens intercaladas | método `synchronized` e UTF-8 | implementado; integração TCP prevista na Fase 7 |
 | `ChatService` (salvar+broadcast; conectar+histórico) | todas as threads de cliente | ordem do banco diferente da exibida; perder mensagem ao entrar | `ordemLock` | implementado; `ChatServiceTest` |
 | `Connection` JDBC | threads que salvam/consultam | uso concorrente de uma conexão | uma `Connection` por operação | implementado em `JdbcMensagemRepository` |
 | `Mensagem`, `Usuario` | todas | nenhum | imutáveis | implementado; testes do model |
@@ -111,3 +111,13 @@ Formato de cada entrada (copie e preencha; mantenha curto):
 - **Testes:** 24 unitários e 2 de integração passando. O teste concorrente usa 6 workers, `ExecutorService` e `CountDownLatch`, sem `Thread.sleep`; cada linha chega ao cliente estável.
 - **Decisão / concorrência:** `ordemLock` protege persistir+broadcast, conectar+histórico e desconectar+aviso. O broadcast usa snapshot; falhas removem a conexão e são registradas com `Logger`.
 - **Próximo passo:** Fase 6 — protocolo, configuração e conexão TCP do servidor.
+
+### 2026-10-13 · Fase 6 — Protocolo e servidor TCP
+
+- **Adicionado:** `Protocolo`, `Config`, `ClienteHandler` e `Servidor` com accept não bloqueante, handlers concorrentes e montagem JDBC no `main`.
+- **Alterado:** prefixos do protocolo como constantes em `ChatService`; `docs/ESTADO.md` marca requisitos 1, 2, 3 e 10 como concluídos.
+- **Removido:** nada.
+- **Arquivos:** `src/main/java/br/unicesumar/chat/config/Config.java`, `src/main/java/br/unicesumar/chat/server/**`, `src/main/java/br/unicesumar/chat/service/ChatService.java`, `src/test/java/br/unicesumar/chat/config/ConfigTest.java`, `src/test/java/br/unicesumar/chat/server/ProtocoloTest.java`, `docs/ESTADO.md`, `docs/RELATORIO_DESENVOLVIMENTO.md`.
+- **Testes:** 30 unitários e 2 de integração JDBC passando; cobertura TCP real fica para a Fase 7.
+- **Decisão / concorrência:** servidor guarda handlers em `ConcurrentHashMap.newKeySet()`, fecha socket e handlers ao parar e cria `Thread(handler, "cliente-N")`; a escrita de cada handler é sincronizada.
+- **Próximo passo:** Fase 7 — cliente console, cenários com sockets reais, README e relatório final.

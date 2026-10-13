@@ -2,10 +2,10 @@
 
 > Mapa compacto para o agente **não precisar varrer o repositório**. **Sobrescreva** a cada tarefa (não acumule histórico aqui; o histórico vai em `RELATORIO_DESENVOLVIMENTO.md`). Mantenha em até ~100 linhas.
 
-**Atualizado em:** 2026-10-13 · **Fase atual:** 5 concluída (registry e serviço)
+**Atualizado em:** 2026-10-13 · **Fase atual:** 6 concluída (protocolo e servidor TCP)
 **Marco "núcleo obrigatório completo":** ⬜ não atingido (previsto no cronograma para 02/11)
-**Testes:** unitários 24 · integração 2 · último resultado: `mvn -q test` verde.
-**Próximo passo:** Fase 6 — protocolo de linha, configuração e handler do cliente.
+**Testes:** unitários 30 · integração 2 · último resultado: `mvn -q test` verde.
+**Próximo passo:** Fase 7 — cliente de console, integração TCP, documentação e validação final.
 
 Legenda: ⬜ pendente · 🟡 em andamento · ✅ pronto e testado
 
@@ -13,16 +13,16 @@ Legenda: ⬜ pendente · 🟡 em andamento · ✅ pronto e testado
 
 | # | Requisito | Onde | Status |
 |---|---|---|---|
-| 1 | `Servidor` com `ServerSocket` e laço `accept()` | server/Servidor | ⬜ |
-| 2 | Uma thread por conexão | server/Servidor | ⬜ |
-| 3 | `ClienteHandler implements Runnable` | server/ClienteHandler | ⬜ |
+| 1 | `Servidor` com `ServerSocket` e laço `accept()` | server/Servidor | ✅ |
+| 2 | Uma thread por conexão | server/Servidor | ✅ |
+| 3 | `ClienteHandler implements Runnable` | server/ClienteHandler | ✅ |
 | 4 | Coleção sincronizada de clientes | service/ClientRegistry | ✅ |
 | 5 | Broadcast para todos | service/ChatService | ✅ |
 | 6 | `Mensagem` (remetente, conteúdo, horário) | model/Mensagem | ✅ |
 | 7 | Persistência JDBC | persistence/jdbc/JdbcMensagemRepository | ✅ |
 | 8 | Repository isolando o SQL | persistence/MensagemRepository | ✅ |
 | 9 | Histórico ao conectar | service/ChatService.conectar | ✅ |
-| 10 | Desconexão segura | server/ClienteHandler (finally) + ChatService.desconectar | 🟡 |
+| 10 | Desconexão segura | server/ClienteHandler (finally) + ChatService.desconectar | ✅ |
 | 11 | ≥ 5 testes JUnit sem rede real | src/test/... | ✅ |
 | 12 | Código em pacotes | todos | ⬜ |
 
@@ -44,11 +44,11 @@ Entregáveis: código ⬜ · `schema.sql` ⬜ · README ⬜ · relatório final 
 | service/FalhaEnvioException, NomeEmUsoException | Falha de envio (runtime) / nome em uso (checked) | ✅ |
 | service/ClientRegistry | Coleção compartilhada e thread-safe de conexões | ✅ |
 | service/ChatService | Regras do chat: conectar, desconectar, enviar, broadcast, histórico | ✅ |
-| server/Protocolo | Parsing das linhas de entrada | ⬜ |
-| server/ClienteHandler | Uma conexão; `Runnable` + `ConexaoCliente` | ⬜ |
-| server/Servidor | `ServerSocket`, `accept()`, `main` (montagem), `iniciar/parar` | ⬜ |
+| server/Protocolo | Parsing das linhas de entrada | ✅ |
+| server/ClienteHandler | Uma conexão; `Runnable` + `ConexaoCliente` | ✅ |
+| server/Servidor | `ServerSocket`, `accept()`, `main` (montagem), `iniciar/parar` | ✅ |
 | client/ClienteChat | Cliente de console com duas threads (teclado e socket) | ⬜ |
-| config/Config | Lê `chat.properties` com valores padrão | ⬜ |
+| config/Config | Lê `chat.properties` com valores padrão | ✅ |
 | resources/schema.sql, chat.properties | Script da tabela; configuração | ✅ |
 | test/support/InMemoryMensagemRepository, FakeConexao | Dublês de teste | ✅ |
 

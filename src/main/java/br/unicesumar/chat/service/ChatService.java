@@ -14,7 +14,8 @@ import java.util.logging.Logger;
 
 /** Coordena regras de conexão, histórico, persistência e distribuição das mensagens. */
 public final class ChatService {
-    private static final String PREFIXO_SISTEMA = "* ";
+    public static final String PREFIXO_SISTEMA = "* ";
+    public static final String PREFIXO_ERRO = "! ";
 
     private final MensagemRepository repositorio;
     private final ClientRegistry registro;
