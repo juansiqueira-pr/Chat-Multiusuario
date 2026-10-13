@@ -70,3 +70,13 @@ Formato de cada entrada (copie e preencha; mantenha curto):
 - **Testes:** `mvn -q test` concluído com sucesso; 0 unitários e 0 integração, pois ainda não há classes de teste.
 - **Decisão / concorrência:** JDK 21 define `maven.compiler.release=21`; JUnit Jupiter 5.14.2 e H2 2.5.252 foram resolvidos pelo Maven Central. O painel 1.2 mantém os mecanismos de concorrência como planejados até as respectivas classes e testes existirem.
 - **Próximo passo:** Fase 2 — `UsuarioTest` antes de `Usuario`.
+
+### 2026-10-13 · Fase 2 — Modelo Usuario
+
+- **Adicionado:** testes de validação, igualdade e hash; `Usuario` imutável e `UsuarioInvalidoException`.
+- **Alterado:** configuração dos plugins Maven Compiler 3.16.0 e Surefire 3.6.0 para compilar com release 21 e descobrir testes JUnit 5.
+- **Removido:** nada.
+- **Arquivos:** `pom.xml`, `src/main/java/br/unicesumar/chat/model/Usuario.java`, `UsuarioInvalidoException.java`, `src/test/java/br/unicesumar/chat/model/UsuarioTest.java`, `docs/ESTADO.md`.
+- **Testes:** 5 unitários passando; 0 integração. A primeira execução falhou como esperado porque `Usuario` ainda não existia.
+- **Decisão / concorrência:** nomes comparam-se usando `Locale.ROOT`, evitando diferenças dependentes da localidade. Ainda não há estado compartilhado implementado.
+- **Próximo passo:** Fase 3 — modelar e testar `Mensagem`.

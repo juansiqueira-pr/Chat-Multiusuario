@@ -2,10 +2,10 @@
 
 > Mapa compacto para o agente **não precisar varrer o repositório**. **Sobrescreva** a cada tarefa (não acumule histórico aqui; o histórico vai em `RELATORIO_DESENVOLVIMENTO.md`). Mantenha em até ~100 linhas.
 
-**Atualizado em:** 2026-10-13 · **Fase atual:** 1 concluída (esqueleto Maven e recursos)
+**Atualizado em:** 2026-10-13 · **Fase atual:** 2 concluída (modelo Usuario)
 **Marco "núcleo obrigatório completo":** ⬜ não atingido (previsto no cronograma para 02/11)
-**Testes:** unitários 0 · integração 0 · último resultado: —
-**Próximo passo:** Fase 2 — criar `UsuarioTest` e implementar `Usuario`.
+**Testes:** unitários 5 · integração 0 · último resultado: `mvn -q test` verde.
+**Próximo passo:** Fase 3 — criar `MensagemTest`, exceções e `Mensagem`.
 
 Legenda: ⬜ pendente · 🟡 em andamento · ✅ pronto e testado
 
@@ -32,7 +32,7 @@ Entregáveis: código ⬜ · `schema.sql` ⬜ · README ⬜ · relatório final 
 
 | Arquivo | Responsabilidade | Status |
 |---|---|---|
-| model/Usuario | Nome validado; imutável; equals/hashCode sem diferenciar maiúsculas | ⬜ |
+| model/Usuario | Nome validado; imutável; equals/hashCode sem diferenciar maiúsculas | ✅ |
 | model/Mensagem | Remetente, conteúdo, horário; valida; `formatar()`; `comId(Long)` | ⬜ |
 | model/MensagemInvalidaException, UsuarioInvalidoException | Erros de negócio (checked) | ⬜ |
 | persistence/MensagemRepository | Contrato: `salvar`, `buscarUltimas(n)` | ⬜ |
