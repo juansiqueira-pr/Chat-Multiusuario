@@ -2,10 +2,10 @@
 
 > Mapa compacto para o agente **não precisar varrer o repositório**. **Sobrescreva** a cada tarefa (não acumule histórico aqui; o histórico vai em `RELATORIO_DESENVOLVIMENTO.md`). Mantenha em até ~100 linhas.
 
-**Atualizado em:** 2026-10-13 · **Fase atual:** 8A concluída (rede e lógica sem Swing)
+**Atualizado em:** 2026-10-13 · **Fase atual:** 8B concluída (componentes visuais Java2D)
 **Marco "núcleo obrigatório completo":** ✅ atingido
 **Testes:** baseline fase 7: 38 passando; após 8A: 40 unitários/arquitetura + 9 integrações, 49 no total, `mvn -q test` verde.
-**Próximo passo:** Fase 8B — componentes visuais Swing/Java2D e capturas headless.
+**Próximo passo:** Fase 8C — telas de conexão e conversa, eventos na EDT e integração de rede.
 
 Legenda: ⬜ pendente · 🟡 em andamento · ✅ pronto e testado
 
@@ -62,6 +62,8 @@ Entregáveis: código ✅ · `schema.sql` ✅ · README ✅ · relatório final 
 | client/LinhaServidor, OuvinteChat | Interpretação do protocolo e eventos independentes de Swing | ✅ |
 | client/ConexaoChat | Socket UTF-8 e thread de leitura com callbacks | ✅ |
 | client/ModeloConversa | Autoria, agrupamento de até 2 minutos e limite de 500 itens | ✅ |
+| client/gui/Tema, Animacao, FundoFuturista | Paleta, fonte instalada, desenho antialias e transições ease-out | ✅ |
+| client/gui/BolhaMensagem, CampoMensagem, BotaoArredondado | Mensagem selecionável, editor multilinha, ação Java2D | ✅ |
 | config/Config | Lê `chat.properties` com valores padrão | ✅ |
 | resources/schema.sql, chat.properties | Script da tabela; configuração | ✅ |
 | test/support/InMemoryMensagemRepository, FakeConexao | Dublês de teste | ✅ |
@@ -82,4 +84,4 @@ Entregáveis: código ✅ · `schema.sql` ✅ · README ✅ · relatório final 
 
 ## Pendências / bugs conhecidos
 
-Fases 8B, 8C e 8D: cliente gráfico Swing, capturas, documentação e revisão visual.
+Fases 8C e 8D: composição do cliente gráfico, telas finais, documentação e revisão visual.

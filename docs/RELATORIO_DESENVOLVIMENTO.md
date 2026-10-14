@@ -143,3 +143,12 @@ Formato de cada entrada (copie e preencha; mantenha curto):
 - **Testes:** baseline 38/38; após a fase, 49/49 (40 unitários/arquitetura e 9 integrações, incluindo 2 novos testes TCP de `ConexaoChat`). `mvn -q test` passou.
 - **Concorrência:** `ConexaoChat` separa leitura em `chat-rede-leitura`, sincroniza escrita no `PrintWriter` e publica eventos sem conhecer Swing; `ModeloConversa` sincroniza acesso à lista e devolve cópias imutáveis. A linha de aceite é enviada no mesmo `ordemLock` que protege o histórico, mantendo o cliente informado antes das mensagens antigas.
 - **Próximo passo:** Fase 8B — componentes visuais Java2D e geração de capturas em modo headless.
+
+### 2026-10-13 · Fase 8B — Base visual Swing e Java2D
+
+- **Adicionado:** `Tema`, `Animacao`, `FundoFuturista`, `BolhaMensagem`, `CampoMensagem`, `BotaoArredondado` e a classe manual `CapturarComponentes` (não descoberta pela suíte).
+- **Arquivos:** `src/main/java/br/unicesumar/chat/client/gui/**`, `src/test/java/br/unicesumar/chat/client/gui/CapturarComponentes.java`, cinco PNGs em `docs/img/`, `docs/ESTADO.md`, este relatório.
+- **Testes:** `mvn -q test` passou com 49 testes; capturas geradas com `java -Djava.awt.headless=true` e renderização em `BufferedImage`, sem abrir janelas.
+- **Decisão visual:** fundo azul-noite com halos discretos, família instalada selecionada na ordem pedida, gradiente ciano-violeta restrito ao botão e às mensagens próprias. Texto de mensagem é selecionável; editor implementa Enter, Shift+Enter, Esc e contador próximo do limite.
+- **Movimento:** `Animacao` usa um `javax.swing.Timer` de 16 ms, ease-out cúbico e repaint apenas do componente animado; o timer para quando a lista de transições esvazia.
+- **Próximo passo:** Fase 8C — telas de conexão e conversa conectadas via `OuvinteChat`.
