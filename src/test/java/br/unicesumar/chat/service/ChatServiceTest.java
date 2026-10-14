@@ -75,7 +75,7 @@ class ChatServiceTest {
     }
 
     @Test
-    void conectarEntregaHistoricoEmOrdemAntesDoAvisoDeEntrada() throws Exception {
+    void conectarConfirmaNickAntesDoHistoricoEAnunciaEntradaDepois() throws Exception {
         InMemoryMensagemRepository repositorio = new InMemoryMensagemRepository();
         repositorio.salvar(mensagem("primeira", 1));
         repositorio.salvar(mensagem("segunda", 2));
@@ -85,9 +85,10 @@ class ChatServiceTest {
 
         servico.conectar(novo);
 
-        assertEquals(List.of("primeira", "segunda"), novo.linhas().subList(0, 2).stream()
+        assertEquals("* Conectado como carlos", novo.linhas().getFirst());
+        assertEquals(List.of("primeira", "segunda"), novo.linhas().subList(1, 3).stream()
                 .map(linha -> linha.substring(linha.indexOf(": ") + 2)).toList());
-        assertTrue(novo.linhas().get(2).startsWith("* "));
+        assertEquals("* carlos entrou", novo.linhas().get(3));
     }
 
     @Test

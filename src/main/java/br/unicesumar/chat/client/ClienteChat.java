@@ -5,20 +5,18 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /** Executa um cliente TCP de console com leitura e escrita em threads separadas. */
 public final class ClienteChat {
-    private ClienteChat() {
-    }
+    private ClienteChat() { }
 
     /** Conecta usando [servidor] [porta] [nick] ou solicita o nick no teclado. */
     public static void main(String[] args) {
         Logger registrador = Logger.getLogger(ClienteChat.class.getName());
-        String servidor = args.length > 0 ? args[0] : "localhost";
+        String host = args.length > 0 ? args[0] : "localhost";
         int porta;
         try {
             porta = args.length > 1 ? Integer.parseInt(args[1]) : 5555;
@@ -28,92 +26,57 @@ public final class ClienteChat {
         }
 
         PrintWriter tela = new PrintWriter(new OutputStreamWriter(System.out, StandardCharsets.UTF_8), true);
-        BufferedReader teclado = new BufferedReader(
-                new InputStreamReader(System.in, StandardCharsets.UTF_8));
-        String nick = args.length > 2 ? args[2] : null;
-        if (nick == null) {
-            tela.print("Nick: ");
-            tela.flush();
-            try {
-                nick = teclado.readLine();
-            } catch (IOException excecao) {
-                registrador.log(Level.SEVERE, "Não foi possível ler o nick.", excecao);
-                return;
-            }
-            if (nick == null) {
-                return;
-            }
-        }
+        BufferedReader teclado = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
+        String nick = args.length > 2 ? args[2] : lerNick(teclado, tela, registrador);
+        if (nick == null) return;
 
-        try (Socket socket = new Socket(servidor, porta);
-             BufferedReader entradaServidor = new BufferedReader(
-                     new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-             PrintWriter saidaServidor = new PrintWriter(
-                     new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true)) {
-            String nickInicial = nick;
-            Thread leitorServidor = new Thread(
-                    () -> receberMensagens(socket, entradaServidor, tela, registrador), "cliente-receptor");
-            Thread leitorTeclado = new Thread(
-                    () -> enviarMensagens(socket, teclado, saidaServidor, nickInicial, registrador),
+        OuvinteChat ouvinte = new OuvinteChat() {
+            @Override public void aoAceitar(String nome) { tela.println("* Conectado como " + nome); }
+            @Override public void aoReceber(LinhaServidor linha) { tela.println(linha.original()); }
+            @Override public void aoRejeitar(String motivo) { tela.println("! " + motivo); }
+            @Override public void aoDesconectar(String motivo) { tela.println(motivo); }
+        };
+        try (ConexaoChat conexao = new ConexaoChat(host, porta, nick, ouvinte)) {
+            conexao.conectar();
+            if (!conexao.aguardarAceite()) return;
+            Thread tecladoThread = new Thread(() -> enviarDoTeclado(teclado, conexao, registrador),
                     "cliente-teclado");
-            leitorTeclado.setDaemon(true);
-            leitorServidor.start();
-            leitorTeclado.start();
-            leitorServidor.join();
+            tecladoThread.setDaemon(true);
+            tecladoThread.start();
+            conexao.aguardarEncerramento();
         } catch (IOException excecao) {
-            registrador.log(Level.SEVERE, "Não foi possível conectar ao servidor.", excecao);
+            registrador.log(Level.SEVERE, "Não foi possível conectar ou enviar ao servidor.", excecao);
         } catch (InterruptedException excecao) {
             Thread.currentThread().interrupt();
             registrador.log(Level.WARNING, "Cliente interrompido.", excecao);
         }
     }
 
-    private static void receberMensagens(Socket socket, BufferedReader entrada, PrintWriter tela,
-                                         Logger registrador) {
+    private static String lerNick(BufferedReader teclado, PrintWriter tela, Logger registrador) {
+        tela.print("Nick: ");
+        tela.flush();
         try {
-            String linha;
-            while ((linha = entrada.readLine()) != null) {
-                tela.println(linha);
-            }
-            tela.println("Conexão encerrada pelo servidor.");
+            return teclado.readLine();
         } catch (IOException excecao) {
-            if (!socket.isClosed()) {
-                registrador.log(Level.WARNING, "Falha ao receber mensagens do servidor.", excecao);
-            }
-        } finally {
-            try {
-                socket.close();
-            } catch (IOException excecao) {
-                registrador.log(Level.WARNING, "Falha ao fechar conexão do cliente.", excecao);
-            }
+            registrador.log(Level.SEVERE, "Não foi possível ler o nick.", excecao);
+            return null;
         }
     }
 
-    private static void enviarMensagens(Socket socket, BufferedReader teclado, PrintWriter saida,
-                                        String nickInicial, Logger registrador) {
+    private static void enviarDoTeclado(BufferedReader teclado, ConexaoChat conexao, Logger registrador) {
         try {
-            escreverLinha(saida, nickInicial);
             String linha;
             while ((linha = teclado.readLine()) != null) {
-                escreverLinha(saida, linha);
                 if ("/quit".equals(linha)) {
-                    socket.shutdownOutput();
+                    conexao.desconectar();
                     return;
                 }
+                conexao.enviar(linha);
             }
-            socket.shutdownOutput();
+            conexao.desconectar();
         } catch (IOException excecao) {
-            if (!socket.isClosed()) {
-                registrador.log(Level.WARNING, "Falha ao enviar dados ao servidor.", excecao);
-            }
-        }
-    }
-
-    private static void escreverLinha(PrintWriter saida, String linha) throws IOException {
-        saida.println(linha);
-        saida.flush();
-        if (saida.checkError()) {
-            throw new IOException("Escrita no socket falhou.");
+            registrador.log(Level.WARNING, "Falha ao enviar dados ao servidor.", excecao);
+            conexao.desconectar();
         }
     }
 }

@@ -134,3 +134,12 @@ Formato de cada entrada (copie e preencha; mantenha curto):
 - **Testes:** 31 unitários/arquitetura e 7 integrações (2 JDBC + 5 TCP), todos passando; `mvn -q test` passou três vezes seguidas. `mvn -q package` compilou e passou; `mvn -q exec:java` iniciou servidor em segundo plano, porta 5555 confirmada e processo encerrado.
 - **Decisão / concorrência:** nenhum plugin exec foi declarado no `pom.xml`, pois o comando de execução funcionou. `mvn -q clean package` não removeu `target/classes/client` no Windows por arquivo em uso; o README documenta `mvn -q package`, que foi validado.
 - **Próximo passo:** núcleo concluído; gravação do vídeo de demonstração pelo aluno.
+
+### 2026-10-13 · Fase 8A — Rede e lógica de cliente sem Swing
+
+- **Adicionado:** `LinhaServidor`, `OuvinteChat`, `ConexaoChat` e `ModeloConversa`; o cliente de console agora reutiliza a conexão compartilhada.
+- **Alterado:** `ChatService.conectar()` envia `* Conectado como <nome>` antes do histórico, sob `ordemLock`; testes unitário e TCP validam a ordem. O console mantém stdin/stdout em UTF-8 e a leitura de rede numa thread nomeada.
+- **Arquivos:** `src/main/java/br/unicesumar/chat/client/**`, `src/main/java/br/unicesumar/chat/service/ChatService.java`, testes em `src/test/java/br/unicesumar/chat/client/**`, `src/test/java/br/unicesumar/chat/service/ChatServiceTest.java`, `src/test/java/br/unicesumar/chat/integracao/ServidorIntegracaoTest.java`, `docs/ESTADO.md`, este relatório.
+- **Testes:** baseline 38/38; após a fase, 49/49 (40 unitários/arquitetura e 9 integrações, incluindo 2 novos testes TCP de `ConexaoChat`). `mvn -q test` passou.
+- **Concorrência:** `ConexaoChat` separa leitura em `chat-rede-leitura`, sincroniza escrita no `PrintWriter` e publica eventos sem conhecer Swing; `ModeloConversa` sincroniza acesso à lista e devolve cópias imutáveis. A linha de aceite é enviada no mesmo `ordemLock` que protege o histórico, mantendo o cliente informado antes das mensagens antigas.
+- **Próximo passo:** Fase 8B — componentes visuais Java2D e geração de capturas em modo headless.

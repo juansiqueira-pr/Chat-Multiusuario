@@ -2,10 +2,10 @@
 
 > Mapa compacto para o agente **não precisar varrer o repositório**. **Sobrescreva** a cada tarefa (não acumule histórico aqui; o histórico vai em `RELATORIO_DESENVOLVIMENTO.md`). Mantenha em até ~100 linhas.
 
-**Atualizado em:** 2026-10-13 · **Fase atual:** 7 concluída (cliente, integração e documentação)
+**Atualizado em:** 2026-10-13 · **Fase atual:** 8A concluída (rede e lógica sem Swing)
 **Marco "núcleo obrigatório completo":** ✅ atingido
-**Testes:** unitários 31 · integração 7 · `mvn -q test` verde em 3 execuções seguidas.
-**Próximo passo:** gravar o vídeo de demonstração (atividade do aluno); nenhum código pendente.
+**Testes:** baseline fase 7: 38 passando; após 8A: 40 unitários/arquitetura + 9 integrações, 49 no total, `mvn -q test` verde.
+**Próximo passo:** Fase 8B — componentes visuais Swing/Java2D e capturas headless.
 
 Legenda: ⬜ pendente · 🟡 em andamento · ✅ pronto e testado
 
@@ -58,7 +58,10 @@ Entregáveis: código ✅ · `schema.sql` ✅ · README ✅ · relatório final 
 | server/Protocolo | Parsing das linhas de entrada | ✅ |
 | server/ClienteHandler | Uma conexão; `Runnable` + `ConexaoCliente` | ✅ |
 | server/Servidor | `ServerSocket`, `accept()`, `main` (montagem), `iniciar/parar` | ✅ |
-| client/ClienteChat | Cliente de console com duas threads (teclado e socket) | ⬜ |
+| client/ClienteChat | Cliente de console reutilizando a conexão TCP compartilhada | ✅ |
+| client/LinhaServidor, OuvinteChat | Interpretação do protocolo e eventos independentes de Swing | ✅ |
+| client/ConexaoChat | Socket UTF-8 e thread de leitura com callbacks | ✅ |
+| client/ModeloConversa | Autoria, agrupamento de até 2 minutos e limite de 500 itens | ✅ |
 | config/Config | Lê `chat.properties` com valores padrão | ✅ |
 | resources/schema.sql, chat.properties | Script da tabela; configuração | ✅ |
 | test/support/InMemoryMensagemRepository, FakeConexao | Dublês de teste | ✅ |
@@ -79,4 +82,4 @@ Entregáveis: código ✅ · `schema.sql` ✅ · README ✅ · relatório final 
 
 ## Pendências / bugs conhecidos
 
-Nenhum.
+Fases 8B, 8C e 8D: cliente gráfico Swing, capturas, documentação e revisão visual.

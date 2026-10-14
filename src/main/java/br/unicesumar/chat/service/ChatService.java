@@ -33,13 +33,14 @@ public final class ChatService {
         this.tamanhoHistorico = tamanhoHistorico;
     }
 
-    /** Registra a conexão, envia o histórico e anuncia a entrada em ordem única. */
+    /** Registra a conexão, confirma o nick, envia o histórico e anuncia a entrada em ordem única. */
     public void conectar(ConexaoCliente cliente) throws NomeEmUsoException {
         synchronized (ordemLock) {
             if (!registro.adicionar(cliente)) {
                 throw new NomeEmUsoException("Nome já está em uso: " + cliente.getUsuario().getNome());
             }
             try {
+                cliente.enviar(PREFIXO_SISTEMA + "Conectado como " + cliente.getUsuario().getNome());
                 for (Mensagem mensagem : buscarHistoricoSemLock()) {
                     cliente.enviar(mensagem.formatar());
                 }

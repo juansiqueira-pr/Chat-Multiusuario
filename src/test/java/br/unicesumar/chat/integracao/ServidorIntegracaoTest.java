@@ -83,6 +83,7 @@ class ServidorIntegracaoTest {
         assertTrue(bruno.aguardar(linha -> linha.contains("ana: historico-segunda")));
 
         ClienteTeste carlos = abrirCliente("carlos");
+        assertTrue(carlos.aguardar(linha -> linha.equals("* Conectado como carlos")));
         String primeira = carlos.aguardarLinha(linha -> linha.contains("ana: historico-primeira"));
         String segunda = carlos.aguardarLinha(linha -> linha.contains("ana: historico-segunda"));
         assertTrue(carlos.aguardar(linha -> linha.equals("* carlos entrou")));
@@ -133,6 +134,7 @@ class ServidorIntegracaoTest {
 
     private ClienteTeste conectar(String nick) throws Exception {
         ClienteTeste cliente = abrirCliente(nick);
+        assertTrue(cliente.aguardar(linha -> linha.equals("* Conectado como " + nick)));
         assertTrue(cliente.aguardar(linha -> linha.equals("* " + nick + " entrou")));
         return cliente;
     }
