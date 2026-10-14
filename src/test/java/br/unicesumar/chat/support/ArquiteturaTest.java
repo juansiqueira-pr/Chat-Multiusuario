@@ -68,8 +68,15 @@ class ArquiteturaTest {
         }
         if (pacote.startsWith("br/unicesumar/chat/client")
                 && (importacao.startsWith("br.unicesumar.chat.service.")
-                || importacao.startsWith("br.unicesumar.chat.persistence."))) {
-            violacoes.add(caminho + " faz client depender de service/persistence: " + importacao);
+                || importacao.startsWith("br.unicesumar.chat.persistence.")
+                || importacao.startsWith("br.unicesumar.chat.server.")
+                || importacao.startsWith("br.unicesumar.chat.model.")
+                || importacao.startsWith("br.unicesumar.chat.config."))) {
+            violacoes.add(caminho + " faz client depender de camadas do núcleo: " + importacao);
+        }
+        if ((importacao.startsWith("javax.swing.") || importacao.startsWith("java.awt."))
+                && !pacote.startsWith("br/unicesumar/chat/client/gui")) {
+            violacoes.add(caminho + " importa Swing/AWT fora de client/gui: " + importacao);
         }
         if (pacote.startsWith("br/unicesumar/chat/persistence") && !jdbc
                 && (importacao.startsWith("br.unicesumar.chat.server.")

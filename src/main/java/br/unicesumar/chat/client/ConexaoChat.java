@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
@@ -38,8 +39,14 @@ public final class ConexaoChat implements AutoCloseable {
     /** Abre o socket, envia o nick e inicia a leitura em uma thread nomeada. */
     public void conectar() throws IOException {
         if (socket != null) throw new IllegalStateException("Conexão já iniciada.");
-        Socket novoSocket = new Socket(host, porta);
+        if (encerrada.get()) throw new IOException("A conexão foi cancelada.");
+        Socket novoSocket = new Socket();
         socket = novoSocket;
+        novoSocket.connect(new InetSocketAddress(host, porta), 5000);
+        if (encerrada.get()) {
+            fecharSocket();
+            throw new IOException("A conexão foi cancelada.");
+        }
         PrintWriter novoEscritor = new PrintWriter(
                 new OutputStreamWriter(novoSocket.getOutputStream(), StandardCharsets.UTF_8), true);
         saida = novoEscritor;

@@ -4,8 +4,8 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-import java.awt.Toolkit;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 /** Reúne paleta, fonte e configuração de desenho comuns às telas Swing. */
@@ -20,9 +20,9 @@ public final class Tema {
     public static final Color VIOLETA = new Color(0x7B61FF);
     public static final Color SUCESSO = new Color(0x34D399);
     public static final Color ERRO = new Color(0xFF6B81);
-    private static final String[] FONTES = {
+    private static final List<String> FONTES = List.of(
             "SF Pro Display", "SF Pro Text", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", "Inter"
-    };
+    );
     private static final String FAMILIA = escolherFonte();
 
     private Tema() { }
@@ -48,6 +48,6 @@ public final class Tema {
     private static String escolherFonte() {
         Set<String> instaladas = Set.copyOf(Arrays.asList(
                 java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()));
-        return Arrays.stream(FONTES).filter(instaladas::contains).findFirst().orElse("Dialog");
+        return FONTES.stream().filter(instaladas::contains).findFirst().orElse("Dialog");
     }
 }

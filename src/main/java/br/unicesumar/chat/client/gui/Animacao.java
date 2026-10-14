@@ -26,6 +26,18 @@ public final class Animacao {
         return timer.isRunning();
     }
 
+    /** Cancela as transições pendentes de um componente específico. */
+    public void cancelar(JComponent componente) {
+        transicoes.removeIf(transicao -> transicao.componente() == componente);
+        if (transicoes.isEmpty()) timer.stop();
+    }
+
+    /** Cancela todas as transições ao encerrar uma janela. */
+    public void parar() {
+        transicoes.clear();
+        timer.stop();
+    }
+
     private void atualizar() {
         long agora = System.nanoTime();
         for (Transicao transicao : List.copyOf(transicoes)) {

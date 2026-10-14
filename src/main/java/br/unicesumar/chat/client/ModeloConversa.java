@@ -11,12 +11,17 @@ import java.util.Objects;
 public final class ModeloConversa {
     private static final int LIMITE = 500;
     private static final Duration JANELA_GRUPO = Duration.ofMinutes(2);
-    private final String nick;
+    private String nick;
     private final List<Item> itens = new ArrayList<>();
 
     /** Cria o modelo de conversa para o participante local. */
     public ModeloConversa(String nick) {
         this.nick = Objects.requireNonNull(nick).toLowerCase(Locale.ROOT);
+    }
+
+    /** Atualiza o participante local antes de começar a receber o histórico. */
+    public synchronized void setNick(String novoNick) {
+        nick = Objects.requireNonNull(novoNick).toLowerCase(Locale.ROOT);
     }
 
     /** Adiciona uma linha e descarta o item mais antigo quando o limite é atingido. */

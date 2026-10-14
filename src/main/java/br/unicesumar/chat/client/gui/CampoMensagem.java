@@ -21,12 +21,18 @@ import java.util.function.Consumer;
 public final class CampoMensagem extends JPanel {
     private final JTextArea texto = new JTextArea(2, 32);
     private final JLabel contador = new JLabel(" ");
-    private final BotaoEnvio enviar = new BotaoEnvio();
+    private final BotaoEnvio enviar;
     private Consumer<String> aoEnviar = ignorar -> { };
 
     /** Cria o campo multilinha e instala os atalhos de teclado solicitados. */
     public CampoMensagem() {
+        this(new Animacao());
+    }
+
+    /** Cria o editor usando o temporizador compartilhado da janela. */
+    public CampoMensagem(Animacao animacao) {
         super(new BorderLayout(8, 4));
+        enviar = new BotaoEnvio(animacao);
         setOpaque(false);
         setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 12, 8, 10));
         texto.setFont(Tema.fonte(14, java.awt.Font.PLAIN));
@@ -37,6 +43,7 @@ public final class CampoMensagem extends JPanel {
         texto.setOpaque(false);
         texto.setMargin(new Insets(5, 4, 5, 4));
         texto.getAccessibleContext().setAccessibleName("Mensagem a enviar");
+        ((javax.swing.text.AbstractDocument) texto.getDocument()).setDocumentFilter(new LimiteTexto());
         JScrollPane rolagem = new JScrollPane(texto);
         rolagem.setBorder(null);
         rolagem.setOpaque(false);
@@ -83,6 +90,14 @@ public final class CampoMensagem extends JPanel {
         atualizarContagem();
     }
 
+    /** Aplica cores de texto adequadas ao tema claro ou escuro. */
+    public void setTemaClaro(boolean claro) {
+        texto.setForeground(claro ? new Color(0x101828) : Tema.TEXTO);
+        texto.setCaretColor(claro ? Tema.VIOLETA : Tema.CIANO);
+        contador.setForeground(claro ? new Color(0x667085) : Tema.SECUNDARIO);
+        repaint();
+    }
+
     /** Dá foco ao editor para uso imediato pelo teclado. */
     public void solicitarFoco() {
         texto.requestFocusInWindow();
@@ -102,7 +117,7 @@ public final class CampoMensagem extends JPanel {
     }
 
     private void enviarTexto() {
-        String valor = texto.getText().trim();
+        String valor = texto.getText().trim().replace('\n', ' ');
         if (valor.isEmpty() || valor.length() > 500 || !texto.isEnabled()) return;
         aoEnviar.accept(valor);
         texto.setText("");
@@ -117,7 +132,12 @@ public final class CampoMensagem extends JPanel {
     }
 
     private static final class BotaoEnvio extends JButton {
-        private BotaoEnvio() {
+        private final Animacao animacao;
+        private double hover;
+        private double pressionado;
+
+        private BotaoEnvio(Animacao animacao) {
+            this.animacao = animacao;
             setPreferredSize(new java.awt.Dimension(42, 38));
             setBorderPainted(false);
             setContentAreaFilled(false);
@@ -125,12 +145,30 @@ public final class CampoMensagem extends JPanel {
             setOpaque(false);
             setToolTipText("Enviar mensagem");
             getAccessibleContext().setAccessibleName("Enviar mensagem");
+            addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override public void mouseEntered(java.awt.event.MouseEvent e) { animar(1, false); }
+                @Override public void mouseExited(java.awt.event.MouseEvent e) { animar(0, false); }
+                @Override public void mousePressed(java.awt.event.MouseEvent e) { animar(1, true); }
+                @Override public void mouseReleased(java.awt.event.MouseEvent e) { animar(0, true); }
+            });
+        }
+
+        private void animar(double destino, boolean escala) {
+            double origem = escala ? pressionado : hover;
+            animacao.animar(this, 180, progresso -> {
+                if (escala) pressionado = origem + (destino - origem) * progresso;
+                else hover = origem + (destino - origem) * progresso;
+            });
         }
 
         @Override protected void paintComponent(Graphics contexto) {
             Graphics2D grafico = (Graphics2D) contexto.create();
             Tema.preparar(grafico);
+            double escala = 1.0 - pressionado * 0.03;
+            grafico.translate(getWidth() * (1.0 - escala) / 2.0, getHeight() * (1.0 - escala) / 2.0);
+            grafico.scale(escala, escala);
             int alpha = isEnabled() ? 215 : 55;
+            alpha = (int) Math.min(255, alpha + hover * 30);
             grafico.setColor(new Color(76, 201, 240, alpha));
             grafico.fillRoundRect(0, 0, getWidth(), getHeight(), 14, 14);
             grafico.setColor(isEnabled() ? Tema.TEXTO : Tema.SECUNDARIO);
@@ -141,6 +179,27 @@ public final class CampoMensagem extends JPanel {
             grafico.drawLine(centroX + 7, centroY, centroX + 1, centroY + 6);
             if (isFocusOwner()) grafico.drawRoundRect(1, 1, getWidth() - 3, getHeight() - 3, 12, 12);
             grafico.dispose();
+        }
+    }
+
+    private static final class LimiteTexto extends javax.swing.text.DocumentFilter {
+        @Override
+        public void insertString(FilterBypass bypass, int offset, String texto,
+                                 javax.swing.text.AttributeSet atributos)
+                throws javax.swing.text.BadLocationException {
+            if (texto != null && bypass.getDocument().getLength() + texto.length() <= 500) {
+                bypass.insertString(offset, texto, atributos);
+            }
+        }
+
+        @Override
+        public void replace(FilterBypass bypass, int offset, int tamanho, String texto,
+                            javax.swing.text.AttributeSet atributos)
+                throws javax.swing.text.BadLocationException {
+            String substituto = texto == null ? "" : texto;
+            if (bypass.getDocument().getLength() - tamanho + substituto.length() <= 500) {
+                bypass.replace(offset, tamanho, substituto, atributos);
+            }
         }
     }
 }

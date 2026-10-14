@@ -16,7 +16,11 @@ import java.awt.geom.RoundRectangle2D;
 /** Bolha com texto selecionável e metadados discretos para uma linha de conversa. */
 public final class BolhaMensagem extends JPanel {
     private final boolean propria;
+    private final JTextArea editor;
+    private final JLabel cabecalho;
     private double entrada = 1.0;
+    private boolean claro;
+    private int larguraMaxima = 460;
 
     /** Cria uma bolha acessível para a linha e regras de agrupamento fornecidas. */
     public BolhaMensagem(LinhaServidor linha, boolean propria, boolean agrupada) {
@@ -27,12 +31,15 @@ public final class BolhaMensagem extends JPanel {
         setAlignmentX(propria ? RIGHT_ALIGNMENT : LEFT_ALIGNMENT);
         if (!agrupada && linha.tipo() == LinhaServidor.Tipo.MENSAGEM) {
             String metadados = linha.remetente() + "  ·  " + (linha.horario() == null ? "" : linha.horario());
-            JLabel cabecalho = new JLabel(metadados);
+            cabecalho = new JLabel(metadados);
             cabecalho.setFont(Tema.fonte(11, java.awt.Font.PLAIN));
             cabecalho.setForeground(Tema.SECUNDARIO);
             add(cabecalho, BorderLayout.NORTH);
+        } else {
+            cabecalho = null;
         }
         JTextArea texto = new JTextArea(linha.texto());
+        editor = texto;
         texto.setFont(Tema.fonte(14, java.awt.Font.PLAIN));
         texto.setForeground(Tema.TEXTO);
         texto.setLineWrap(true);
@@ -55,6 +62,26 @@ public final class BolhaMensagem extends JPanel {
         entrada = Math.max(0, Math.min(1, progresso));
     }
 
+    /** Aplica as cores de texto adequadas ao tema atual. */
+    public void setTemaClaro(boolean ativo) {
+        claro = ativo;
+        editor.setForeground(ativo && !propria ? new Color(0x101828) : Tema.TEXTO);
+        if (cabecalho != null) cabecalho.setForeground(ativo ? new Color(0x667085) : Tema.SECUNDARIO);
+        repaint();
+    }
+
+    /** Limita a largura e recalcula altura de texto com quebra real de linha. */
+    public void setLarguraMaxima(int largura) {
+        larguraMaxima = Math.max(200, largura);
+        if (getPreferredSize().width == larguraMaxima) return;
+        javax.swing.text.View vista = editor.getUI().getRootView(editor).getView(0);
+        vista.setSize(larguraMaxima - 30, Integer.MAX_VALUE);
+        int alturaTexto = (int) Math.ceil(vista.getPreferredSpan(javax.swing.text.View.Y_AXIS));
+        int alturaCabecalho = cabecalho == null ? 0 : 18;
+        setPreferredSize(new Dimension(larguraMaxima, alturaTexto + alturaCabecalho + 28));
+        revalidate();
+    }
+
     /** Pinta vidro ou gradiente próprio com entrada curta de transparência e deslocamento. */
     @Override
     protected void paintComponent(Graphics contexto) {
@@ -64,8 +91,8 @@ public final class BolhaMensagem extends JPanel {
         grafico.setComposite(java.awt.AlphaComposite.SrcOver.derive((float) entrada));
         RoundRectangle2D forma = new RoundRectangle2D.Double(0, 0, getWidth() - 1, getHeight() - 1, 20, 20);
         if (propria) {
-            grafico.setPaint(new java.awt.GradientPaint(0, 0, new Color(76, 201, 240, 220),
-                    getWidth(), getHeight(), new Color(123, 97, 255, 220)));
+            grafico.setPaint(new java.awt.GradientPaint(0, 0, new Color(12, 101, 131, 238),
+                    getWidth(), getHeight(), new Color(83, 65, 171, 238)));
         } else {
             grafico.setColor(new Color(255, 255, 255, 20));
         }

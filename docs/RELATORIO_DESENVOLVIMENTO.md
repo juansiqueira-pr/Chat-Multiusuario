@@ -152,3 +152,12 @@ Formato de cada entrada (copie e preencha; mantenha curto):
 - **Decisão visual:** fundo azul-noite com halos discretos, família instalada selecionada na ordem pedida, gradiente ciano-violeta restrito ao botão e às mensagens próprias. Texto de mensagem é selecionável; editor implementa Enter, Shift+Enter, Esc e contador próximo do limite.
 - **Movimento:** `Animacao` usa um `javax.swing.Timer` de 16 ms, ease-out cúbico e repaint apenas do componente animado; o timer para quando a lista de transições esvazia.
 - **Próximo passo:** Fase 8C — telas de conexão e conversa conectadas via `OuvinteChat`.
+
+### 2026-10-13 · Fase 8C — Telas Swing conectadas ao cliente TCP
+
+- **Adicionado:** `TelaConexao`, `ListaMensagens`, `TelaChat`, `PainelTransicao` e `ClienteChatGui`; `CapturarTelas` gera prévias das duas telas em modo headless.
+- **Alterado:** `ModeloConversa` aceita o nick local ao concluir o handshake; `ListaMensagens` anima bolhas/rolagem, mantém até 500 linhas e marca a fronteira do histórico; `CampoMensagem` limita entrada a 500 caracteres e achata quebras em espaços antes de enviar, pois o protocolo existente é linha a linha.
+- **Arquivos:** `src/main/java/br/unicesumar/chat/client/gui/**`, `src/main/java/br/unicesumar/chat/client/ModeloConversa.java`, `src/test/java/br/unicesumar/chat/support/ArquiteturaTest.java`, `src/test/java/br/unicesumar/chat/client/gui/CapturarTelas.java`, `docs/img/tela-*.png`.
+- **Testes:** `mvn -q test` passou com 49 testes; `ClienteChatGui.main` detectou headless e encerrou sem abrir janela; as capturas finais foram renderizadas em `BufferedImage` e revisadas.
+- **Concorrência/EDT:** EDT recebe todos os eventos de rede via `SwingUtilities.invokeLater`; `chat-rede-leitura` só lê socket e publica eventos; executor `chat-envio` serializa connect/envio e é encerrado ao fechar; `Animacao` compartilha um único `Timer` na janela, que para ao não haver transições (exceto pulso online/spinner ativos).
+- **Próximo passo:** Fase 8D — revisão visual, documentos e teste do comando de execução.
