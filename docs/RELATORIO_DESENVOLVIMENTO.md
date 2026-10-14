@@ -179,3 +179,11 @@ Formato de cada entrada (copie e preencha; mantenha curto):
 - **Fechamento:** callbacks de rede entram na EDT por `SwingUtilities.invokeLater`; fechar o socket interrompe a leitura, e o executor é encerrado sem manter a janela aberta.
 - **Decisão / concorrência:** nenhuma dependência nova; o protocolo continua uma linha por mensagem, então Shift+Enter formata o rascunho, mas suas quebras viram espaços no envio. A GUI usa somente Swing/Java2D e mantém o console reutilizando `ConexaoChat`.
 - **Próximo passo:** o aluno conferir foco, escala e integração visual em Windows/VS Code e gravar o vídeo de demonstração.
+
+### 2026-10-14 · Validação de conversa gráfica e encerramento
+
+- **Verificado:** duas telas `TelaChat` ligadas a `ConexaoChat` estabeleceram conexões reais com um servidor TCP e persistência H2 em memória. O cliente bruno enviou “boa noite”; ana e bruno receberam a linha, e o teste confirmou o texto renderizado em ambas as telas. Ao parar o servidor, ambos receberam o callback de desconexão e as telas indicaram `Desconectado`.
+- **Teste:** `ConversaGuiIntegracaoTest` usa a EDT para construir/inspecionar componentes Swing, filas e limites de tempo para aguardar eventos. Nenhuma janela nativa foi aberta nesta sessão; o teste é executável em ambiente headless. A compilação inicial do teste falhou porque chamadas de método não são permitidas como recursos em `try-with-resources`; foi corrigida usando variáveis finais de conexão e o teste direcionado passou.
+- **Suíte:** `mvn -q test`: 53/53 passaram (41 unitários/arquitetura + 12 integrações; 0 falhas/erros/ignorados).
+- **Observação operacional:** ao parar o servidor, os handlers fecham os sockets concorrentemente. Um broadcast de saída pode tentar escrever em um socket que já está sendo fechado e registrar um aviso; isso não impediu o encerramento, não perdeu a mensagem validada e ambos os clientes receberam a desconexão.
+- **Próximo passo:** revisão visual manual no desktop do aluno, conforme pendência do estado do projeto.

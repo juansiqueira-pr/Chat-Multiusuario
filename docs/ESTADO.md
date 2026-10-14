@@ -2,10 +2,10 @@
 
 > Mapa compacto para o agente **não precisar varrer o repositório**. **Sobrescreva** a cada tarefa (não acumule histórico aqui; o histórico vai em `RELATORIO_DESENVOLVIMENTO.md`). Mantenha em até ~100 linhas.
 
-**Atualizado em:** 2026-10-13 · **Fase atual:** 8D concluída (GUI Swing)
+**Atualizado em:** 2026-10-14 · **Fase atual:** GUI validada com dois clientes TCP
 **Marco "núcleo obrigatório completo":** ✅ atingido
-**Testes:** baseline fase 7: 38 passando; fase 8D: 41 unitários/arquitetura + 11 integrações = 52, 0 falhas/erros; `test`, `package` e `exec:java` headless passaram.
-**Próximo passo:** conferir foco, escala e comportamento de janela no desktop do aluno; as capturas revisadas estão em `docs/img/`.
+**Testes:** 41 unitários/arquitetura + 12 integrações = 53; 0 falhas/erros/ignorados. Inclui dois clientes GUI reais conversando por TCP e encerramento do servidor; teste da conversa e suíte `mvn -q test` passaram.
+**Próximo passo:** conferir foco, escala e comportamento de janela no desktop do aluno; a validação automatizada Swing foi headless para não abrir janelas nesta sessão.
 
 Legenda: ⬜ pendente · 🟡 em andamento · ✅ pronto e testado
 
@@ -87,4 +87,4 @@ Entregáveis: código ✅ · `schema.sql` ✅ · README ✅ · relatório final 
 
 ## Pendências / bugs conhecidos
 
-Pendência manual: conferir a interface no Windows/VS Code do aluno. O campo aceita Shift+Enter para editar, mas converte quebras em espaços ao enviar porque o protocolo é linha a linha.
+Pendência manual: conferir a interface no Windows/VS Code do aluno. O campo aceita Shift+Enter para editar, mas converte quebras em espaços ao enviar porque o protocolo é linha a linha. Desligar servidor com clientes ativos pode produzir aviso de falha de envio no broadcast de saída enquanto os sockets são fechados; o encerramento e os callbacks de desconexão foram confirmados.
