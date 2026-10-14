@@ -69,6 +69,7 @@ public final class ClienteChatGui {
         telaConexao.setAoConectar(this::conectar);
         telaChat.setAoEnviar(this::enviar);
         telaChat.setAoReconectar(this::voltarAConexao);
+        telaChat.setAoAlterarTema(telaConexao::setTemaClaro);
     }
 
     private void conectar(TelaConexao.PedidoConexao pedido) {

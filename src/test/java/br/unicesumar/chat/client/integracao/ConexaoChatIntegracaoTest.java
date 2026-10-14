@@ -22,6 +22,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ConexaoChatIntegracaoTest {
@@ -72,6 +73,28 @@ class ConexaoChatIntegracaoTest {
                 assertEquals("rejeicao", aguardar("rejeicao").tipo());
             }
             servidor.parar();
+            assertEquals("desconexao", aguardar("desconexao").tipo());
+        }
+    }
+
+    @Test
+    void cancelarAntesDeConectarImpedeAberturaDoSocket() {
+        ConexaoChat conexao = new ConexaoChat("127.0.0.1", servidor.getPortaLocal(), "ana", ouvinte);
+
+        conexao.desconectar();
+
+        assertThrows(java.io.IOException.class, conexao::conectar);
+        conexao.desconectar();
+    }
+
+    @Test
+    void desconexaoLocalFechaLeituraENotificaUmaVez() throws Exception {
+        try (ConexaoChat conexao = new ConexaoChat("127.0.0.1", servidor.getPortaLocal(), "ana", ouvinte)) {
+            conexao.conectar();
+            assertEquals(new Evento("aceite", "ana"), aguardar("aceite"));
+
+            conexao.desconectar();
+
             assertEquals("desconexao", aguardar("desconexao").tipo());
         }
     }

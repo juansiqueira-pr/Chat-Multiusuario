@@ -42,17 +42,23 @@ public final class ConexaoChat implements AutoCloseable {
         if (encerrada.get()) throw new IOException("A conexão foi cancelada.");
         Socket novoSocket = new Socket();
         socket = novoSocket;
-        novoSocket.connect(new InetSocketAddress(host, porta), 5000);
-        if (encerrada.get()) {
+        try {
+            novoSocket.connect(new InetSocketAddress(host, porta), 5000);
+            if (encerrada.get()) {
+                fecharSocket();
+                throw new IOException("A conexão foi cancelada.");
+            }
+            PrintWriter novoEscritor = new PrintWriter(
+                    new OutputStreamWriter(novoSocket.getOutputStream(), StandardCharsets.UTF_8), true);
+            saida = novoEscritor;
+            enviarLinha(nick);
+            Thread leitor = new Thread(this::lerLinhas, "chat-rede-leitura");
+            leitor.start();
+        } catch (IOException | RuntimeException excecao) {
+            encerrada.set(true);
             fecharSocket();
-            throw new IOException("A conexão foi cancelada.");
+            throw excecao;
         }
-        PrintWriter novoEscritor = new PrintWriter(
-                new OutputStreamWriter(novoSocket.getOutputStream(), StandardCharsets.UTF_8), true);
-        saida = novoEscritor;
-        enviarLinha(nick);
-        Thread leitor = new Thread(this::lerLinhas, "chat-rede-leitura");
-        leitor.start();
     }
 
     /** Envia uma mensagem sem bloquear a thread de leitura. */
@@ -67,8 +73,10 @@ public final class ConexaoChat implements AutoCloseable {
         if (!encerrada.compareAndSet(false, true)) return;
         PrintWriter escritor = saida;
         if (aceita && escritor != null && socket != null && !socket.isClosed()) {
-            escritor.println("/quit");
-            escritor.flush();
+            synchronized (escritor) {
+                escritor.println("/quit");
+                escritor.flush();
+            }
         }
         fecharSocket();
     }
@@ -134,6 +142,12 @@ public final class ConexaoChat implements AutoCloseable {
     }
 
     private void fecharSocket() {
+        PrintWriter escritor = saida;
+        if (escritor != null) {
+            synchronized (escritor) {
+                escritor.close();
+            }
+        }
         Socket atual = socket;
         if (atual != null && !atual.isClosed()) {
             try {

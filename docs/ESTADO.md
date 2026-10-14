@@ -2,10 +2,10 @@
 
 > Mapa compacto para o agente **não precisar varrer o repositório**. **Sobrescreva** a cada tarefa (não acumule histórico aqui; o histórico vai em `RELATORIO_DESENVOLVIMENTO.md`). Mantenha em até ~100 linhas.
 
-**Atualizado em:** 2026-10-13 · **Fase atual:** 8C concluída (telas e integração Swing)
+**Atualizado em:** 2026-10-13 · **Fase atual:** 8D concluída (GUI Swing)
 **Marco "núcleo obrigatório completo":** ✅ atingido
-**Testes:** baseline fase 7: 38 passando; após 8A: 40 unitários/arquitetura + 9 integrações, 49 no total, `mvn -q test` verde.
-**Próximo passo:** Fase 8D — polimento, regras de arquitetura, README e execução documentada.
+**Testes:** baseline fase 7: 38 passando; fase 8D: 41 unitários/arquitetura + 11 integrações = 52, 0 falhas/erros; `test`, `package` e `exec:java` headless passaram.
+**Próximo passo:** conferir foco, escala e comportamento de janela no desktop do aluno; as capturas revisadas estão em `docs/img/`.
 
 Legenda: ⬜ pendente · 🟡 em andamento · ✅ pronto e testado
 
@@ -66,6 +66,7 @@ Entregáveis: código ✅ · `schema.sql` ✅ · README ✅ · relatório final 
 | client/gui/BolhaMensagem, CampoMensagem, BotaoArredondado | Mensagem selecionável, editor multilinha, ação Java2D | ✅ |
 | client/gui/TelaConexao, ListaMensagens, TelaChat | Entrada, conversa, histórico, estados, envio e reconexão manual | ✅ |
 | client/gui/PainelTransicao, ClienteChatGui | Fade cruzado, EDT, conexão e executor serial de envio | ✅ |
+| client/gui/CapturarComponentes, CapturarTelas (test/manual) | Geração de PNG em `BufferedImage`, não executadas pela suíte | ✅ |
 | config/Config | Lê `chat.properties` com valores padrão | ✅ |
 | resources/schema.sql, chat.properties | Script da tabela; configuração | ✅ |
 | test/support/InMemoryMensagemRepository, FakeConexao | Dublês de teste | ✅ |
@@ -86,4 +87,4 @@ Entregáveis: código ✅ · `schema.sql` ✅ · README ✅ · relatório final 
 
 ## Pendências / bugs conhecidos
 
-Fase 8D: polimento, documentação, screenshots finais e validação do comando Maven.
+Pendência manual: conferir a interface no Windows/VS Code do aluno. O campo aceita Shift+Enter para editar, mas converte quebras em espaços ao enviar porque o protocolo é linha a linha.

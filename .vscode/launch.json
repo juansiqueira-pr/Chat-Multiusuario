@@ -17,6 +17,13 @@
       "projectName": "chat-multiusuario",
       "args": "localhost 5555 ana",
       "console": "integratedTerminal"
+    },
+    {
+      "type": "java",
+      "name": "Cliente (interface gráfica)",
+      "request": "launch",
+      "mainClass": "br.unicesumar.chat.client.gui.ClienteChatGui",
+      "projectName": "chat-multiusuario"
     }
   ]
 }

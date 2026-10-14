@@ -28,6 +28,7 @@ public final class TelaChat extends JPanel {
     private final BotaoTema botaoTema;
     private Consumer<String> aoEnviar = ignorar -> { };
     private Runnable aoReconectar = () -> { };
+    private Consumer<Boolean> aoAlterarTema = ignorar -> { };
     private String nick = "";
     private boolean temaClaro;
     private boolean historicoSeparado;
@@ -38,7 +39,7 @@ public final class TelaChat extends JPanel {
         this.animacao = animacao;
         mensagens = new ListaMensagens("", animacao);
         campo = new CampoMensagem(animacao);
-        botaoTema = new BotaoTema(() -> setTemaClaro(!temaClaro));
+        botaoTema = new BotaoTema(this::alternarTema);
         setOpaque(false);
         JPanel conteudo = new JPanel(new BorderLayout(0, 12));
         conteudo.setOpaque(false);
@@ -81,6 +82,11 @@ public final class TelaChat extends JPanel {
         aoReconectar = acao == null ? () -> { } : acao;
     }
 
+    /** Mantém o formulário de conexão no mesmo tema escolhido no chat. */
+    public void setAoAlterarTema(Consumer<Boolean> acao) {
+        aoAlterarTema = acao == null ? ignorar -> { } : acao;
+    }
+
     /** Registra o nick aceito e atualiza o cabeçalho de conexão. */
     public void setConectado(String nome) {
         nick = nome;
@@ -89,7 +95,7 @@ public final class TelaChat extends JPanel {
         mensagens.setVisible(true);
         identidade.setText("Conectado como " + nome);
         status.setText("Online");
-        status.setForeground(Tema.SUCESSO);
+        status.setForeground(temaClaro ? new Color(0x027A48) : Tema.SUCESSO);
         campo.setHabilitado(true);
         botaoTema.setOnline(true);
         pontoOnline.setOnline(true);
@@ -129,6 +135,11 @@ public final class TelaChat extends JPanel {
         campo.setTemaClaro(claro);
         reconectar.setForeground(texto);
         botaoTema.repaint();
+    }
+
+    private void alternarTema() {
+        setTemaClaro(!temaClaro);
+        aoAlterarTema.accept(temaClaro);
     }
 
     private JPanel criarCabecalho() {

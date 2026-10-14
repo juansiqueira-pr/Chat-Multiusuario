@@ -94,10 +94,11 @@ public final class BolhaMensagem extends JPanel {
             grafico.setPaint(new java.awt.GradientPaint(0, 0, new Color(12, 101, 131, 238),
                     getWidth(), getHeight(), new Color(83, 65, 171, 238)));
         } else {
-            grafico.setColor(new Color(255, 255, 255, 20));
+            grafico.setColor(claro ? new Color(16, 24, 40, 13) : new Color(255, 255, 255, 20));
         }
         grafico.fill(forma);
-        grafico.setColor(propria ? new Color(170, 220, 255, 70) : Tema.BORDA_VIDRO);
+        grafico.setColor(propria ? new Color(170, 220, 255, 70)
+                : (claro ? new Color(16, 24, 40, 24) : Tema.BORDA_VIDRO));
         grafico.draw(forma);
         grafico.dispose();
         super.paintComponent(contexto);

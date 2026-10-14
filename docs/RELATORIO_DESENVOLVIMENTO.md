@@ -20,7 +20,10 @@
 | `Servidor` (socket e ciclo de vida) | thread accept e thread que chama `parar()` | aceitar conexão durante ou após a parada | estado `volatile`; transições protegidas por `cicloLock` | implementado; integração TCP |
 | `Servidor.handlersAtivos` | accept, parada e handlers | coleção alterada durante encerramento | conjunto `ConcurrentHashMap.newKeySet()` | implementado; `ServidorIntegracaoTest` |
 | `ClienteHandler.usuario` / `saida` / `enviar()` | handler, serviço e broadcasts | referência não publicada ou linhas intercaladas | referências `volatile`; envio `synchronized` e UTF-8 | implementado; integração TCP |
-| `ClienteChat.socket` | thread do teclado e thread receptora | encerramento enquanto a outra direção está em uso | entrada e saída têm um único escritor cada; fechar socket interrompe ambas; falhas são tratadas | implementado; servidor real validado |
+| `ConexaoChat.socket` / `saida` / `encerrada` | executor de conexão/envio, leitor de rede e thread que solicita fechamento | envio simultâneo ou cancelamento durante connect/leitura | `AtomicBoolean`, escrita e fechamento sob o monitor do escritor, socket fechado para interromper leitura e connect limitado a 5 s | `ConexaoChatIntegracaoTest` (cancelamento, fechamento local e fim do servidor) |
+| `ClienteChatGui.conexao` / `envio` | EDT e executor serial | fechar a janela enquanto conexão ou envio está enfileirado | referência `volatile`; operações ordenadas pelo `ExecutorService`; no fechamento, fecha a conexão e encerra o executor | `ConexaoChatIntegracaoTest.cancelarAntesDeConectarImpedeAberturaDoSocket`; inicialização headless |
+| componentes Swing e `Animacao.transicoes` | EDT e callbacks do leitor | mutação de componente por thread de rede | eventos publicados com `SwingUtilities.invokeLater`; a lista do temporizador e a árvore Swing ficam na EDT | `ArquiteturaTest`; capturas `BufferedImage` headless |
+| `ModeloConversa.itens` | callbacks da conversa e camada de apresentação | leitura durante adição ou descarte do item mais antigo | métodos sincronizados e `List.copyOf` para snapshots | `ModeloConversaTest` |
 | `ChatService` (salvar+broadcast; conectar+histórico) | todas as threads de cliente | ordem do banco diferente da exibida; perder mensagem ao entrar | `ordemLock` | implementado; `ChatServiceTest` |
 | `Connection` JDBC | threads que salvam/consultam | uso concorrente de uma conexão | uma `Connection` por operação | implementado em `JdbcMensagemRepository` |
 | `Mensagem`, `Usuario` | todas | nenhum | imutáveis | implementado; testes do model |
@@ -31,6 +34,7 @@
 |---|---|---|---|---|
 | 1 | Duas conexões tentam registrar o mesmo nome ao mesmo tempo | ambas poderiam passar na verificação e aparecer online com o mesmo nome | `adicionar` e `remover` são atômicos; comparação usa `Usuario.equals` | `ClientRegistryTest.adicaoConcorrenteDoMesmoNomeEAtomica` |
 | 2 | Alterações do registry coincidem com broadcast | iteração direta da lista poderia lançar exceção ou pular uma conexão estável | `CopyOnWriteArrayList`; broadcast percorre `snapshot()` | `ChatServiceTest.concorrenciaEntreRegistroRemocaoEBroadcastNaoPerdeLinhasNoClienteEstavel` |
+| 3 | A janela fecha durante a tentativa de conexão ou leitura | socket podia continuar aberto ou a thread de leitura ficar presa após a tela fechar | conexão registra o socket antes do connect, verifica cancelamento após conectar, usa timeout de 5 s e fecha socket/streams idempotentemente | `ConexaoChatIntegracaoTest.cancelarAntesDeConectarImpedeAberturaDoSocket`; `ConexaoChatIntegracaoTest.desconexaoLocalFechaLeituraENotificaUmaVez` |
 
 ### 1.4 Extras implementados e fora do escopo
 
@@ -161,3 +165,17 @@ Formato de cada entrada (copie e preencha; mantenha curto):
 - **Testes:** `mvn -q test` passou com 49 testes; `ClienteChatGui.main` detectou headless e encerrou sem abrir janela; as capturas finais foram renderizadas em `BufferedImage` e revisadas.
 - **Concorrência/EDT:** EDT recebe todos os eventos de rede via `SwingUtilities.invokeLater`; `chat-rede-leitura` só lê socket e publica eventos; executor `chat-envio` serializa connect/envio e é encerrado ao fechar; `Animacao` compartilha um único `Timer` na janela, que para ao não haver transições (exceto pulso online/spinner ativos).
 - **Próximo passo:** Fase 8D — revisão visual, documentos e teste do comando de execução.
+
+### 2026-10-13 · Fase 8D — Polimento, arquitetura e documentação da GUI
+
+- **Adicionado:** entrada gráfica em README, configuração VS Code `Cliente (interface gráfica)`, regras de import em `docs/AGENTS.md`, diagramas e riscos de GUI no relatório final; duas integrações para cancelamento e fechamento local; teste de agrupamento na virada do dia.
+- **Alterado:** painel 1.2/1.3 registra conexões, executor, EDT, animação e três races; `ConexaoChat` fecha writer/socket em falha e cancela a tentativa com timeout de 5 s; agrupamento considera virada de meia-noite.
+- **Arquivos:** `.vscode/launch.json`, `README.md`, `docs/AGENTS.md`, `docs/ESTADO.md`, `docs/RELATORIO_DESENVOLVIMENTO.md`, `docs/RELATORIO_FINAL.md`, client, testes de integração/modelo.
+- **Testes:** 52/52 passaram (41 unitários/arquitetura + 11 integrações; 0 falhas/erros/ignorados). `mvn -q package` e `mvn -q exec:java -Dexec.mainClass=br.unicesumar.chat.client.gui.ClienteChatGui` também concluíram; o segundo foi executado com `java.awt.headless=true`, sem janela. `launch.json` validado como JSON.
+- **EDT:** a Event Dispatch Thread cria e altera os componentes Swing e executa as ações locais; ela não conecta nem envia mensagens.
+- **Leitura de rede:** `chat-rede-leitura` lê UTF-8 do socket e chama `OuvinteChat`, sem tocar na interface.
+- **Envio:** o executor de thread única `chat-envio` faz connect, envia mensagens em ordem e encerra com a janela.
+- **Animação:** um `javax.swing.Timer` compartilhado publica quadros na EDT; ele para quando não há transições, exceto enquanto status online ou spinner estão ativos.
+- **Fechamento:** callbacks de rede entram na EDT por `SwingUtilities.invokeLater`; fechar o socket interrompe a leitura, e o executor é encerrado sem manter a janela aberta.
+- **Decisão / concorrência:** nenhuma dependência nova; o protocolo continua uma linha por mensagem, então Shift+Enter formata o rascunho, mas suas quebras viram espaços no envio. A GUI usa somente Swing/Java2D e mantém o console reutilizando `ConexaoChat`.
+- **Próximo passo:** o aluno conferir foco, escala e integração visual em Windows/VS Code e gravar o vídeo de demonstração.

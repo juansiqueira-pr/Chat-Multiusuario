@@ -26,6 +26,15 @@ class ModeloConversaTest {
     }
 
     @Test
+    void agrupaMensagensQueAtravessamMeiaNoite() {
+        ModeloConversa modelo = new ModeloConversa("eu");
+        modelo.adicionar(LinhaServidor.interpretar("[31/12 23:59] ana: quase meia-noite"));
+        modelo.adicionar(LinhaServidor.interpretar("[01/01 00:01] ana: virou o dia"));
+
+        assertTrue(modelo.itens().getLast().agrupada());
+    }
+
+    @Test
     void mantemNoMaximoQuinhentosItens() {
         ModeloConversa modelo = new ModeloConversa("eu");
         IntStream.range(0, 510).forEach(i -> modelo.adicionar(

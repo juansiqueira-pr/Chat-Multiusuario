@@ -57,6 +57,10 @@ src/test/java/...    model/ service/ persistence/ integracao/ support/ (InMemory
 
 Nova classe ou pacote só se houver uma responsabilidade nova de verdade.
 
+GUI Swing fica somente em `client/gui`; demais classes de `client` falam com o sistema pela rede, via `ConexaoChat`.
+Somente `client/gui` pode importar `javax.swing` ou `java.awt`; cliente não importa `server`, `service`, `persistence`, `model` nem `config`.
+Eventos do socket devem chegar à interface pela EDT (`SwingUtilities.invokeLater`); tarefas de rede não acessam componentes Swing.
+
 ## 7. Regras de dependência (violar = bug)
 
 ```

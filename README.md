@@ -80,7 +80,24 @@ Exemplo de sessão: Ana digita `Oi, pessoal!`; os clientes veem `[13/10 09:00] a
 
 O H2 cria `data/chat.mv.db` relativo à pasta de onde o servidor foi iniciado. Para zerar o histórico, pare o servidor e apague a pasta `data/`.
 
-## 9. Estrutura de pacotes
+## 9. Interface gráfica
+
+Inicie o servidor como descrito acima e abra o cliente Swing em outro terminal:
+
+```powershell
+mvn -q exec:java -Dexec.mainClass=br.unicesumar.chat.client.gui.ClienteChatGui
+```
+
+No VS Code, escolha **Cliente (interface gráfica)** em **Run and Debug**.
+
+![Tela de conexão](docs/img/tela-conexao.png)
+
+![Tela de conversa](docs/img/tela-chat.png)
+
+- **Enter:** envia a mensagem; **Shift+Enter:** quebra linha no editor (as quebras viram espaços ao enviar, pois o protocolo TCP do projeto é uma linha por mensagem).
+- **Esc:** limpa o campo. O texto pode ser selecionado e copiado; o ícone de sol/lua alterna o tema.
+
+## 10. Estrutura de pacotes
 
 ```text
 br.unicesumar.chat
@@ -93,7 +110,7 @@ br.unicesumar.chat
 └── service/      ChatService, ClientRegistry e abstrações de conexão.
 ```
 
-## 10. Concorrência
+## 11. Concorrência
 
 - O servidor cria uma thread nomeada por cliente.
 - `ClientRegistry` usa `CopyOnWriteArrayList` e torna o nome único de forma atômica.
@@ -101,14 +118,14 @@ br.unicesumar.chat
 - `ClienteHandler.enviar()` é sincronizado para não misturar linhas no mesmo socket.
 - `ChatService.ordemLock` serializa salvar+broadcast e registrar+enviar histórico.
 
-## 11. Solução de problemas
+## 12. Solução de problemas
 
 - **Porta em uso:** altere `porta` em `chat.properties` ou encerre o processo que usa `5555`.
 - **Acentos quebrados no Windows:** no terminal, execute `chcp 65001` antes do Maven.
 - **Firewall:** permita conexões TCP na porta configurada para clientes na rede.
 - **Banco em uso:** não rode dois servidores apontando ao mesmo `data/`; encerre o outro servidor primeiro.
 
-## 12. Roteiro do vídeo
+## 13. Roteiro do vídeo
 
 1. Inicie o servidor e mostre a porta ativa.
 2. Conecte Ana, Bruno e Carlos em três terminais.
@@ -117,8 +134,8 @@ br.unicesumar.chat
 5. Feche um cliente abruptamente e prove que os demais continuam conversando.
 6. Encerre os clientes com `/quit` e pare o servidor.
 
-## 13. Uso de IA e limitações
+## 14. Uso de IA e limitações
 
 IA generativa foi usada como apoio à implementação, aos testes e à documentação; decisões e código devem ser revisados e explicados pelo aluno. O histórico de desenvolvimento está em [docs/RELATORIO_DESENVOLVIMENTO.md](docs/RELATORIO_DESENVOLVIMENTO.md).
 
-O núcleo não tem autenticação, salas, mensagens privadas, TLS, interface gráfica, timeout de inatividade ou reconexão automática. Os nicks identificam clientes apenas durante a conexão.
+O sistema não tem autenticação, salas, mensagens privadas, TLS, timeout de inatividade ou reconexão automática. Os nicks identificam clientes apenas durante a conexão.

@@ -135,6 +135,7 @@ public final class ListaMensagens extends JPanel {
             }
         }
         novasMensagens.setForeground(claro ? new Color(0x101828) : Tema.TEXTO);
+        novasMensagens.setBackground(claro ? new Color(255, 255, 255, 225) : new Color(30, 42, 65, 230));
         repaint();
     }
 

@@ -48,6 +48,7 @@ public final class ModeloConversa {
         LocalTime atual = linha.horario();
         LocalTime passado = linhaAnterior.horario();
         long segundos = Duration.between(passado, atual).getSeconds();
+        if (segundos < 0) segundos += Duration.ofDays(1).getSeconds();
         return segundos >= 0 && segundos <= JANELA_GRUPO.getSeconds();
     }
 
