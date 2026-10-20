@@ -7,6 +7,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
@@ -45,7 +46,14 @@ public final class ListaMensagens extends JPanel {
         rolagem.getViewport().setOpaque(false);
         rolagem.setBorder(null);
         rolagem.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        rolagem.getVerticalScrollBar().setUnitIncrement(18);
+        JScrollBar barra = rolagem.getVerticalScrollBar();
+        barra.setUnitIncrement(18);
+        barra.setOpaque(false);
+        barra.setBorder(null);
+        barra.setPreferredSize(new java.awt.Dimension(14, 0));
+        barra.getAccessibleContext().setAccessibleName("Rolagem da conversa");
+        barra.setToolTipText("Arraste para navegar pelo histórico");
+        barra.setUI(new BarraRolagemUI());
         add(rolagem, BorderLayout.CENTER);
         JPanel superior = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 6));
         superior.setOpaque(false);
@@ -136,6 +144,7 @@ public final class ListaMensagens extends JPanel {
         }
         novasMensagens.setForeground(claro ? new Color(0x101828) : Tema.TEXTO);
         novasMensagens.setBackground(claro ? new Color(0xE7EFEA) : new Color(0x2D454F));
+        rolagem.getVerticalScrollBar().repaint();
         repaint();
     }
 
@@ -200,6 +209,56 @@ public final class ListaMensagens extends JPanel {
             int maximoAtual = rolagem.getVerticalScrollBar().getMaximum();
             rolagem.getVerticalScrollBar().setValue((int) (origem + (maximoAtual - origem) * progresso));
         });
+    }
+
+    private final class BarraRolagemUI extends javax.swing.plaf.basic.BasicScrollBarUI {
+        @Override
+        protected void paintTrack(java.awt.Graphics contexto, javax.swing.JComponent componente,
+                                  java.awt.Rectangle limites) {
+            java.awt.Graphics2D grafico = (java.awt.Graphics2D) contexto.create();
+            Tema.preparar(grafico);
+            grafico.setColor(temaClaro ? new Color(0xDCE5DF) : Tema.SUPERFICIE);
+            int largura = 3;
+            int x = limites.x + (limites.width - largura) / 2;
+            grafico.fillRoundRect(x, limites.y + 3, largura, Math.max(0, limites.height - 6), largura, largura);
+            grafico.dispose();
+        }
+
+        @Override
+        protected void paintThumb(java.awt.Graphics contexto, javax.swing.JComponent componente,
+                                  java.awt.Rectangle limites) {
+            if (limites.isEmpty() || !scrollbar.isEnabled()) return;
+            java.awt.Graphics2D grafico = (java.awt.Graphics2D) contexto.create();
+            Tema.preparar(grafico);
+            grafico.setColor(temaClaro
+                    ? (isThumbRollover() || isDragging ? new Color(0x23856E) : new Color(0x82988F))
+                    : (isThumbRollover() || isDragging ? Tema.CIANO : new Color(0x627A7D)));
+            int largura = 7;
+            int x = limites.x + (limites.width - largura) / 2;
+            int altura = Math.max(18, limites.height - 4);
+            grafico.fillRoundRect(x, limites.y + 2, largura, Math.min(altura, limites.height - 2), largura, largura);
+            grafico.dispose();
+        }
+
+        @Override
+        protected JButton createDecreaseButton(int orientacao) { return criarBotaoVazio(); }
+
+        @Override
+        protected JButton createIncreaseButton(int orientacao) { return criarBotaoVazio(); }
+
+        @Override
+        protected java.awt.Dimension getMinimumThumbSize() { return new java.awt.Dimension(8, 28); }
+
+        private JButton criarBotaoVazio() {
+            JButton botao = new JButton();
+            botao.setPreferredSize(new java.awt.Dimension(0, 0));
+            botao.setMinimumSize(new java.awt.Dimension(0, 0));
+            botao.setMaximumSize(new java.awt.Dimension(0, 0));
+            botao.setOpaque(false);
+            botao.setBorder(null);
+            botao.setFocusable(false);
+            return botao;
+        }
     }
 
     private static final class Orbe extends javax.swing.JComponent {

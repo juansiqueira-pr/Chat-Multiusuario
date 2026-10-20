@@ -34,6 +34,14 @@ public final class CapturarTelas {
                 chat.adicionar(LinhaServidor.interpretar("* ana entrou"));
                 chat.adicionar(LinhaServidor.interpretar("[13/10 09:31] bruno: Também gostei. A conversa fica clara e leve."));
                 chat.adicionar(LinhaServidor.interpretar("[13/10 09:32] ana: E o histórico aparece quando alguém entra."));
+                String[] mensagens = {"Já encontrei o material da aula.", "Vou compartilhar o resumo aqui.",
+                        "Perfeito, vou conferir.", "A atividade ficou para sexta.", "Obrigado pelo aviso.",
+                        "Combinado. Até mais tarde.", "O histórico já está atualizado.", "Boa noite, pessoal."};
+                for (int indice = 0; indice < mensagens.length; indice++) {
+                    String remetente = indice % 2 == 0 ? "bruno" : "ana";
+                    chat.adicionar(LinhaServidor.interpretar("[13/10 09:" + (33 + indice) + "] "
+                            + remetente + ": " + mensagens[indice]));
+                }
                 salvar(chat, 1000, 680, destino.resolve("tela-chat.png"));
             } catch (Throwable excecao) {
                 falha.set(excecao);

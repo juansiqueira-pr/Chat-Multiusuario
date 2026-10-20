@@ -2,10 +2,10 @@
 
 > Mapa compacto para o agente **não precisar varrer o repositório**. **Sobrescreva** a cada tarefa (não acumule histórico aqui; o histórico vai em `RELATORIO_DESENVOLVIMENTO.md`). Mantenha em até ~100 linhas.
 
-**Atualizado em:** 2026-10-20 · **Fase atual:** identidade visual da GUI revisada
+**Atualizado em:** 2026-10-20 · **Fase atual:** barra de rolagem da conversa refinada
 **Marco "núcleo obrigatório completo":** ✅ atingido
-**Testes:** 42 unitários/arquitetura + 12 integrações = 54; 0 falhas/erros/ignorados. `mvn -q test` passou; capturas Swing atualizadas e revisadas em modo headless.
-**Próximo passo:** conferir foco, escala e comportamento de janela no desktop do aluno; nenhuma janela nativa foi aberta nesta sessão.
+**Testes:** 43 unitários/arquitetura + 12 integrações = 55; 0 falhas/erros/ignorados. `mvn -q test` passou; barra customizada conferida em captura Swing headless.
+**Próximo passo:** conferir a interação com a barra, foco e escala em janela real no desktop do aluno; nenhuma janela nativa foi aberta nesta sessão.
 
 Legenda: ⬜ pendente · 🟡 em andamento · ✅ pronto e testado
 

@@ -196,3 +196,12 @@ Formato de cada entrada (copie e preencha; mantenha curto):
 - **Testes:** `mvn -q test`: 54/54 passaram (42 unitários/arquitetura + 12 integrações; 0 falhas/erros/ignorados). Capturas Swing em `BufferedImage`, sem abrir janelas.
 - **Concorrência:** nenhuma mudança nos fluxos de rede ou compartilhamento; a atualização visual é executada na EDT como antes.
 - **Próximo passo:** conferir foco e escala em janela real no desktop do aluno.
+
+### 2026-10-20 · Barra de rolagem da conversa
+
+- **Alterado:** `ListaMensagens` usa uma barra vertical compacta baseada no `BasicScrollBarUI`: trilho fino, alça arredondada, cor de destaque durante hover/arraste, setas removidas e largura constante de 14 px. O nome acessível e a dica descrevem sua função. O histórico de exemplo nas capturas foi ampliado para tornar a rolagem visível.
+- **Teste primeiro:** `ListaMensagensVisualTest` falhou com `MetalScrollBarUI`; após a implementação confirmou o UI personalizado, a largura e o nome acessível. A captura em `BufferedImage` foi revisada.
+- **Arquivos:** `ListaMensagens`, `ListaMensagensVisualTest`, `CapturarTelas`, `docs/img/tela-chat.png`, `docs/ESTADO.md` e este relatório.
+- **Testes:** `mvn -q test`: 55/55 passaram (43 unitários/arquitetura + 12 integrações; 0 falhas/erros/ignorados).
+- **Concorrência:** sem alteração na lógica compartilhada; rolagem e desenho Swing continuam restritos à EDT. A barra mantém navegação por roda, teclado e arraste fornecida pelo Swing.
+- **Próximo passo:** conferir o comportamento da barra em uma janela real no Windows, macOS ou Linux.
