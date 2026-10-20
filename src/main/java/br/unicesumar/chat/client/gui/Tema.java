@@ -10,16 +10,15 @@ import java.util.Set;
 
 /** Reúne paleta, fonte e configuração de desenho comuns às telas Swing. */
 public final class Tema {
-    public static final Color FUNDO_INICIO = new Color(0x0A0E1A);
-    public static final Color FUNDO_FIM = new Color(0x121A2E);
-    public static final Color VIDRO = new Color(255, 255, 255, 18);
-    public static final Color BORDA_VIDRO = new Color(255, 255, 255, 27);
-    public static final Color TEXTO = new Color(0xE8ECF5);
-    public static final Color SECUNDARIO = new Color(0xAAB4C9);
-    public static final Color CIANO = new Color(0x4CC9F0);
-    public static final Color VIOLETA = new Color(0x7B61FF);
-    public static final Color SUCESSO = new Color(0x34D399);
-    public static final Color ERRO = new Color(0xFF6B81);
+    public static final Color FUNDO_INICIO = new Color(0x101E2B);
+    public static final Color SUPERFICIE = new Color(0x1D3441);
+    public static final Color BORDA = new Color(0x344955);
+    public static final Color TEXTO = new Color(0xEAF1EE);
+    public static final Color SECUNDARIO = new Color(0xA5B7B5);
+    public static final Color CIANO = new Color(0x4FC3A1);
+    public static final Color CORAL = new Color(0xE98B68);
+    public static final Color SUCESSO = new Color(0x4FC3A1);
+    public static final Color ERRO = new Color(0xE47773);
     private static final List<String> FONTES = List.of(
             "SF Pro Display", "SF Pro Text", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", "Inter"
     );

@@ -25,7 +25,7 @@ public final class BotaoArredondado extends JButton {
         super(texto);
         this.animacao = animacao;
         setFont(Tema.fonte(14, java.awt.Font.BOLD));
-        setForeground(Tema.TEXTO);
+        setForeground(Tema.FUNDO_INICIO);
         setBorderPainted(false);
         setContentAreaFilled(false);
         setFocusPainted(false);
@@ -72,7 +72,7 @@ public final class BotaoArredondado extends JButton {
         });
     }
 
-    /** Pinta gradiente do acento, contorno de foco e escala de pressão. */
+    /** Pinta o botão na cor de ação, com contorno de foco e escala de pressão. */
     @Override
     protected void paintComponent(Graphics contexto) {
         Graphics2D grafico = (Graphics2D) contexto.create();
@@ -80,19 +80,18 @@ public final class BotaoArredondado extends JButton {
         double escala = 1.0 - pressionado * 0.03;
         grafico.translate(getWidth() * (1.0 - escala) / 2.0, getHeight() * (1.0 - escala) / 2.0);
         grafico.scale(escala, escala);
-        int alpha = isEnabled() ? (int) (205 + hover * 50) : 75;
-        grafico.setPaint(new java.awt.GradientPaint(0, 0, comAlpha(new Color(12, 101, 131), alpha),
-                getWidth(), getHeight(), comAlpha(new Color(83, 65, 171), alpha)));
-        grafico.fillRoundRect(1, 1, getWidth() - 2, getHeight() - 2, 18, 18);
+        int alpha = isEnabled() ? (int) (235 + hover * 20) : 85;
+        grafico.setColor(comAlpha(Tema.CIANO, alpha));
+        grafico.fillRoundRect(1, 1, getWidth() - 2, getHeight() - 2, 10, 10);
         if (carregando) {
-            grafico.setColor(new Color(255, 255, 255, 220));
+            grafico.setColor(Tema.FUNDO_INICIO);
             grafico.setStroke(new java.awt.BasicStroke(2f));
             grafico.drawArc(getWidth() - 28, (getHeight() - 14) / 2, 14, 14,
                     (int) anguloCarregamento, 250);
         }
         if (isFocusOwner()) {
-            grafico.setColor(new Color(232, 236, 245, 180));
-            grafico.drawRoundRect(2, 2, getWidth() - 5, getHeight() - 5, 16, 16);
+            grafico.setColor(Tema.CORAL);
+            grafico.drawRoundRect(2, 2, getWidth() - 5, getHeight() - 5, 9, 9);
         }
         grafico.dispose();
         super.paintComponent(contexto);

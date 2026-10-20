@@ -23,6 +23,7 @@ public final class CampoMensagem extends JPanel {
     private final JLabel contador = new JLabel(" ");
     private final BotaoEnvio enviar;
     private Consumer<String> aoEnviar = ignorar -> { };
+    private boolean temaClaro;
 
     /** Cria o campo multilinha e instala os atalhos de teclado solicitados. */
     public CampoMensagem() {
@@ -92,8 +93,9 @@ public final class CampoMensagem extends JPanel {
 
     /** Aplica cores de texto adequadas ao tema claro ou escuro. */
     public void setTemaClaro(boolean claro) {
+        temaClaro = claro;
         texto.setForeground(claro ? new Color(0x101828) : Tema.TEXTO);
-        texto.setCaretColor(claro ? Tema.VIOLETA : Tema.CIANO);
+        texto.setCaretColor(claro ? Tema.CORAL : Tema.CIANO);
         contador.setForeground(claro ? new Color(0x667085) : Tema.SECUNDARIO);
         repaint();
     }
@@ -103,14 +105,14 @@ public final class CampoMensagem extends JPanel {
         texto.requestFocusInWindow();
     }
 
-    /** Pinta a superfície de vidro com borda de foco suave. */
+    /** Pinta a área de escrita com contraste e foco visível. */
     @Override
     protected void paintComponent(Graphics contexto) {
         Graphics2D grafico = (Graphics2D) contexto.create();
         Tema.preparar(grafico);
-        grafico.setColor(new Color(255, 255, 255, 18));
+        grafico.setColor(temaClaro ? Color.WHITE : new Color(0x172B36));
         grafico.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 18, 18);
-        grafico.setColor(texto.isFocusOwner() ? new Color(76, 201, 240, 110) : Tema.BORDA_VIDRO);
+        grafico.setColor(texto.isFocusOwner() ? Tema.CIANO : Tema.BORDA);
         grafico.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 18, 18);
         grafico.dispose();
         super.paintComponent(contexto);
@@ -169,8 +171,8 @@ public final class CampoMensagem extends JPanel {
             grafico.scale(escala, escala);
             int alpha = isEnabled() ? 215 : 55;
             alpha = (int) Math.min(255, alpha + hover * 30);
-            grafico.setColor(new Color(76, 201, 240, alpha));
-            grafico.fillRoundRect(0, 0, getWidth(), getHeight(), 14, 14);
+            grafico.setColor(new Color(Tema.CIANO.getRed(), Tema.CIANO.getGreen(), Tema.CIANO.getBlue(), alpha));
+            grafico.fillRoundRect(0, 0, getWidth(), getHeight(), 9, 9);
             grafico.setColor(isEnabled() ? Tema.TEXTO : Tema.SECUNDARIO);
             int centroX = getWidth() / 2;
             int centroY = getHeight() / 2;

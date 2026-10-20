@@ -187,3 +187,12 @@ Formato de cada entrada (copie e preencha; mantenha curto):
 - **Suíte:** `mvn -q test`: 53/53 passaram (41 unitários/arquitetura + 12 integrações; 0 falhas/erros/ignorados).
 - **Observação operacional:** ao parar o servidor, os handlers fecham os sockets concorrentemente. Um broadcast de saída pode tentar escrever em um socket que já está sendo fechado e registrar um aviso; isso não impediu o encerramento, não perdeu a mensagem validada e ambos os clientes receberam a desconexão.
 - **Próximo passo:** revisão visual manual no desktop do aluno, conforme pendência do estado do projeto.
+
+### 2026-10-20 · Revisão visual da interface Swing
+
+- **Alterado:** paleta da GUI passou a usar azul-petróleo `#101E2B`, ardósia `#1D3441`, texto claro `#EAF1EE`, verde-sinal `#4FC3A1` e coral `#E98B68`. Fundo e superfícies ficaram sólidos; mensagens próprias e recebidas usam superfícies diferentes. Foco, campos e botão de envio mantêm contraste. As capturas `docs/img/tela-conexao.png` e `docs/img/tela-chat.png` foram refeitas e revisadas com renderização headless.
+- **Teste primeiro:** `TemaVisualTest` falhou com a paleta anterior e passou após a mudança. A primeira captura revelou que o desenho da borda cobria os valores dos campos; foi corrigido para deixar o próprio `JTextField` pintar o fundo e o texto. Outra falha de compilação revelou uma borda interna `static` acessando estado da tela; ela passou a ser uma classe interna de instância.
+- **Arquivos:** `Tema`, `FundoFuturista`, `TelaConexao`, `BolhaMensagem`, `CampoMensagem`, `BotaoArredondado`, `ListaMensagens`, `TemaVisualTest`, capturas em `docs/img/`, `docs/ESTADO.md` e este relatório.
+- **Testes:** `mvn -q test`: 54/54 passaram (42 unitários/arquitetura + 12 integrações; 0 falhas/erros/ignorados). Capturas Swing em `BufferedImage`, sem abrir janelas.
+- **Concorrência:** nenhuma mudança nos fluxos de rede ou compartilhamento; a atualização visual é executada na EDT como antes.
+- **Próximo passo:** conferir foco e escala em janela real no desktop do aluno.

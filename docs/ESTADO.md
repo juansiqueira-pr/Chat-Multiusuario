@@ -2,10 +2,10 @@
 
 > Mapa compacto para o agente **não precisar varrer o repositório**. **Sobrescreva** a cada tarefa (não acumule histórico aqui; o histórico vai em `RELATORIO_DESENVOLVIMENTO.md`). Mantenha em até ~100 linhas.
 
-**Atualizado em:** 2026-10-14 · **Fase atual:** GUI validada com dois clientes TCP
+**Atualizado em:** 2026-10-20 · **Fase atual:** identidade visual da GUI revisada
 **Marco "núcleo obrigatório completo":** ✅ atingido
-**Testes:** 41 unitários/arquitetura + 12 integrações = 53; 0 falhas/erros/ignorados. Inclui dois clientes GUI reais conversando por TCP e encerramento do servidor; teste da conversa e suíte `mvn -q test` passaram.
-**Próximo passo:** conferir foco, escala e comportamento de janela no desktop do aluno; a validação automatizada Swing foi headless para não abrir janelas nesta sessão.
+**Testes:** 42 unitários/arquitetura + 12 integrações = 54; 0 falhas/erros/ignorados. `mvn -q test` passou; capturas Swing atualizadas e revisadas em modo headless.
+**Próximo passo:** conferir foco, escala e comportamento de janela no desktop do aluno; nenhuma janela nativa foi aberta nesta sessão.
 
 Legenda: ⬜ pendente · 🟡 em andamento · ✅ pronto e testado
 

@@ -49,7 +49,7 @@ public final class BolhaMensagem extends JPanel {
         texto.setOpaque(false);
         texto.setMargin(new Insets(0, 0, 0, 0));
         texto.setSelectedTextColor(Tema.TEXTO);
-        texto.setSelectionColor(new Color(76, 201, 240, 90));
+        texto.setSelectionColor(new Color(79, 195, 161, 90));
         texto.getAccessibleContext().setAccessibleName("Mensagem de "
                 + (linha.remetente().isEmpty() ? linha.tipo().name().toLowerCase() : linha.remetente()));
         add(texto, BorderLayout.CENTER);
@@ -65,7 +65,7 @@ public final class BolhaMensagem extends JPanel {
     /** Aplica as cores de texto adequadas ao tema atual. */
     public void setTemaClaro(boolean ativo) {
         claro = ativo;
-        editor.setForeground(ativo && !propria ? new Color(0x101828) : Tema.TEXTO);
+        editor.setForeground(ativo ? new Color(0x172B2A) : Tema.TEXTO);
         if (cabecalho != null) cabecalho.setForeground(ativo ? new Color(0x667085) : Tema.SECUNDARIO);
         repaint();
     }
@@ -82,7 +82,7 @@ public final class BolhaMensagem extends JPanel {
         revalidate();
     }
 
-    /** Pinta vidro ou gradiente próprio com entrada curta de transparência e deslocamento. */
+    /** Pinta superfícies distintas para mensagens próprias e recebidas. */
     @Override
     protected void paintComponent(Graphics contexto) {
         Graphics2D grafico = (Graphics2D) contexto.create();
@@ -91,14 +91,13 @@ public final class BolhaMensagem extends JPanel {
         grafico.setComposite(java.awt.AlphaComposite.SrcOver.derive((float) entrada));
         RoundRectangle2D forma = new RoundRectangle2D.Double(0, 0, getWidth() - 1, getHeight() - 1, 20, 20);
         if (propria) {
-            grafico.setPaint(new java.awt.GradientPaint(0, 0, new Color(12, 101, 131, 238),
-                    getWidth(), getHeight(), new Color(83, 65, 171, 238)));
+            grafico.setColor(claro ? new Color(0xCDE8DC) : new Color(0x245C52));
         } else {
-            grafico.setColor(claro ? new Color(16, 24, 40, 13) : new Color(255, 255, 255, 20));
+            grafico.setColor(claro ? new Color(0xFFFFFF) : new Color(0x263943));
         }
         grafico.fill(forma);
-        grafico.setColor(propria ? new Color(170, 220, 255, 70)
-                : (claro ? new Color(16, 24, 40, 24) : Tema.BORDA_VIDRO));
+        grafico.setColor(propria ? (claro ? new Color(0x8BBDAA) : new Color(0x397B6D))
+                : (claro ? new Color(0xD8E2DC) : Tema.BORDA));
         grafico.draw(forma);
         grafico.dispose();
         super.paintComponent(contexto);

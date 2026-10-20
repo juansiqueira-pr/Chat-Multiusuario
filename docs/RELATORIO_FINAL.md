@@ -65,7 +65,7 @@ sequenceDiagram
 
 Uma race de nick duplicado foi evitada tornando a inclusão atômica (`ClientRegistryTest`). Alterações no registry durante broadcast são seguras por snapshot e foram exercitadas com `ExecutorService` e `CountDownLatch` (`ChatServiceTest`). O lock de ordenação impede que uma mensagem fique entre o registro do novo cliente e o envio do histórico.
 
-O fechamento da GUI durante conexão/leitura também fecha o socket e os streams; o connect tem timeout de 5 s e verifica cancelamento (`ConexaoChatIntegracaoTest`). O cliente gráfico usa Swing/Java2D sem dependências adicionais, tema escuro com alternância clara e capturas em `docs/img/`. Como o protocolo existente envia uma linha por mensagem, quebras feitas com Shift+Enter são convertidas em espaços ao enviar.
+O fechamento da GUI durante conexão/leitura também fecha o socket e os streams; o connect tem timeout de 5 s e verifica cancelamento (`ConexaoChatIntegracaoTest`). O cliente gráfico usa Swing/Java2D sem dependências adicionais, paleta azul-petróleo, ardósia, verde-sinal e coral, com alternância clara e capturas em `docs/img/`. Como o protocolo existente envia uma linha por mensagem, quebras feitas com Shift+Enter são convertidas em espaços ao enviar.
 
 O H2 usa `./data/chat`; o schema é inicializado com `CREATE ... IF NOT EXISTS`. O histórico busca os últimos IDs em ordem decrescente e os inverte para a ordem cronológica. Os testes JDBC usam bancos em memória com nome aleatório.
 

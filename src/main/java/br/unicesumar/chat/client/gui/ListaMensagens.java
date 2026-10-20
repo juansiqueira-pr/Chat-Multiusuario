@@ -51,7 +51,7 @@ public final class ListaMensagens extends JPanel {
         superior.setOpaque(false);
         novasMensagens.setFont(Tema.fonte(11, Font.BOLD));
         novasMensagens.setForeground(Tema.TEXTO);
-        novasMensagens.setBackground(new Color(30, 42, 65, 230));
+        novasMensagens.setBackground(new Color(0x2D454F));
         novasMensagens.setBorder(BorderFactory.createEmptyBorder(7, 14, 7, 14));
         novasMensagens.setVisible(false);
         novasMensagens.setToolTipText("Rolar para as mensagens mais recentes");
@@ -135,7 +135,7 @@ public final class ListaMensagens extends JPanel {
             }
         }
         novasMensagens.setForeground(claro ? new Color(0x101828) : Tema.TEXTO);
-        novasMensagens.setBackground(claro ? new Color(255, 255, 255, 225) : new Color(30, 42, 65, 230));
+        novasMensagens.setBackground(claro ? new Color(0xE7EFEA) : new Color(0x2D454F));
         repaint();
     }
 
@@ -207,13 +207,17 @@ public final class ListaMensagens extends JPanel {
         @Override protected void paintComponent(java.awt.Graphics contexto) {
             java.awt.Graphics2D grafico = (java.awt.Graphics2D) contexto.create();
             Tema.preparar(grafico);
-            int d = Math.min(getWidth(), getHeight());
-            grafico.setPaint(new java.awt.RadialGradientPaint(getWidth() / 2f, getHeight() / 2f, d / 2f,
-                    new float[]{0f, 0.5f, 1f}, new Color[]{new Color(76, 201, 240, 90),
-                    new Color(123, 97, 255, 35), new Color(123, 97, 255, 0)}));
-            grafico.fillOval(0, 0, d, d);
-            grafico.setColor(new Color(76, 201, 240, 120));
-            grafico.fillOval(d / 3, d / 3, d / 3, d / 3);
+            int centroX = getWidth() / 2;
+            int centroY = getHeight() / 2;
+            grafico.setColor(Tema.SUPERFICIE);
+            grafico.fillRoundRect(centroX - 31, centroY - 20, 62, 40, 14, 14);
+            grafico.setColor(Tema.CIANO);
+            grafico.drawRoundRect(centroX - 31, centroY - 20, 62, 40, 14, 14);
+            grafico.drawLine(centroX - 15, centroY + 20, centroX - 21, centroY + 27);
+            grafico.drawLine(centroX - 21, centroY + 27, centroX - 4, centroY + 20);
+            for (int ponto = -10; ponto <= 10; ponto += 10) {
+                grafico.fillOval(centroX + ponto - 2, centroY - 2, 4, 4);
+            }
             grafico.dispose();
         }
     }

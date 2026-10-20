@@ -173,8 +173,8 @@ public final class TelaConexao extends JPanel {
         campo.setFont(Tema.fonte(14, Font.PLAIN));
         campo.setForeground(Tema.TEXTO);
         campo.setCaretColor(Tema.CIANO);
-        campo.setOpaque(false);
-        campo.setBackground(new Color(255, 255, 255, 20));
+        campo.setOpaque(true);
+        campo.setBackground(new Color(0x263B46));
         campo.setBorder(BorderFactory.createCompoundBorder(new BordaCampo(),
                 BorderFactory.createEmptyBorder(8, 10, 8, 10)));
         campo.getAccessibleContext().setAccessibleName(nomeAcessivel);
@@ -184,8 +184,8 @@ public final class TelaConexao extends JPanel {
         if (componente instanceof JLabel etiqueta && componente != erro) etiqueta.setForeground(texto);
         if (componente instanceof JTextField campo) {
             campo.setForeground(texto);
-            campo.setCaretColor(claro ? Tema.VIOLETA : Tema.CIANO);
-            campo.setBackground(claro ? new Color(255, 255, 255, 220) : new Color(255, 255, 255, 20));
+            campo.setCaretColor(claro ? Tema.CORAL : Tema.CIANO);
+            campo.setBackground(claro ? new Color(0xFFFFFF) : new Color(0x263B46));
         }
         if (componente instanceof JPanel painel) {
             for (java.awt.Component filho : painel.getComponents()) atualizarTexto(filho, texto, claro);
@@ -199,32 +199,30 @@ public final class TelaConexao extends JPanel {
         @Override public void paintBorder(java.awt.Component c, java.awt.Graphics g, int x, int y, int w, int h) {
             Graphics2D grafico = (Graphics2D) g.create();
             Tema.preparar(grafico);
-            grafico.setColor(c.getBackground());
-            grafico.fillRoundRect(x, y, w - 1, h - 1, 14, 14);
-            grafico.setColor(c.isFocusOwner() ? new Color(76, 201, 240, 180) : new Color(255, 255, 255, 35));
+            grafico.setColor(c.isFocusOwner() ? Tema.CIANO : Tema.BORDA);
             grafico.drawRoundRect(x, y, w - 1, h - 1, 14, 14);
             grafico.dispose();
         }
         @Override public Insets getBorderInsets(java.awt.Component c) { return new Insets(6, 8, 6, 8); }
     }
 
-    private static final class BordaVidro extends javax.swing.border.AbstractBorder {
+    private final class BordaVidro extends javax.swing.border.AbstractBorder {
         @Override public void paintBorder(java.awt.Component c, java.awt.Graphics g, int x, int y, int w, int h) {
             Graphics2D grafico = (Graphics2D) g.create();
             Tema.preparar(grafico);
-            grafico.setColor(new Color(255, 255, 255, 25));
+            grafico.setColor(temaClaro ? new Color(0xD8E2DC) : Tema.BORDA);
             grafico.drawRoundRect(x, y, w - 1, h - 1, 24, 24);
             grafico.dispose();
         }
         @Override public Insets getBorderInsets(java.awt.Component c) { return new Insets(1, 1, 1, 1); }
     }
 
-    private static final class PainelVidro extends JPanel {
+    private final class PainelVidro extends JPanel {
         private PainelVidro() { setOpaque(false); }
         @Override protected void paintComponent(java.awt.Graphics contexto) {
             Graphics2D grafico = (Graphics2D) contexto.create();
             Tema.preparar(grafico);
-            grafico.setColor(new Color(255, 255, 255, 14));
+            grafico.setColor(temaClaro ? Color.WHITE : Tema.SUPERFICIE);
             grafico.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 24, 24);
             grafico.dispose();
         }
