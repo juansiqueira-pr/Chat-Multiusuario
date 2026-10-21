@@ -34,6 +34,15 @@ Edite `src/main/resources/chat.properties` antes de iniciar o servidor:
 
 Se `chat.properties` não estiver no classpath, `Config` usa esses valores padrão.
 
+Para testar manualmente o acesso ao Hugging Face, crie `.env` na raiz com `HF_TOKEN=seu_token` (o arquivo é ignorado pelo Git). Os endpoints e IDs dos quatro modelos ficam nas propriedades `ia.*` deste mesmo `chat.properties`. Execute o teste manual, que não faz parte da suíte automática:
+
+```powershell
+mvn -q test-compile
+mvn -q exec:java "-Dexec.mainClass=br.unicesumar.chat.infraestrutura.ia.ConectividadeManualHuggingFace" "-Dexec.classpathScope=test"
+```
+
+O token precisa ter permissão de **Inference Providers** e saldo/créditos disponíveis. O teste informa o erro recebido por cada modelo; ele não troca modelos ou provedores automaticamente.
+
 ## 4. Compilar e testar
 
 Na raiz do projeto:

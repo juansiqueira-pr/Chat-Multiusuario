@@ -2,10 +2,10 @@
 
 > Mapa compacto para o agente **não precisar varrer o repositório**. **Sobrescreva** a cada tarefa (não acumule histórico aqui; o histórico vai em `RELATORIO_DESENVOLVIMENTO.md`). Mantenha em até ~100 linhas.
 
-**Atualizado em:** 2026-10-20 · **Fase atual:** barra de rolagem da conversa refinada
+**Atualizado em:** 2026-10-20 · **Fase atual:** base Hugging Face configurada; conectividade bloqueada
 **Marco "núcleo obrigatório completo":** ✅ atingido
-**Testes:** 43 unitários/arquitetura + 12 integrações = 55; 0 falhas/erros/ignorados. `mvn -q test` passou; barra customizada conferida em captura Swing headless.
-**Próximo passo:** conferir a interação com a barra, foco e escala em janela real no desktop do aluno; nenhuma janela nativa foi aberta nesta sessão.
+**Testes:** 47 unitários/arquitetura + 12 integrações = 59; 0 falhas/erros/ignorados. `mvn -q test` passou; classe manual tentou os quatro modelos.
+**Próximo passo:** habilitar créditos e um provedor para Qwen2.5-1.5B-Instruct; repetir o teste manual antes de iniciar a Fase 1. Não trocar modelos automaticamente.
 
 Legenda: ⬜ pendente · 🟡 em andamento · ✅ pronto e testado
 

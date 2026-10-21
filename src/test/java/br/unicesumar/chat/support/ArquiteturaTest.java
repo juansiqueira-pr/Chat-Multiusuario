@@ -53,8 +53,10 @@ class ArquiteturaTest {
         if (importacao.startsWith("java.sql.") && !jdbc) {
             violacoes.add(caminho + " importa " + importacao + " fora de persistence/jdbc");
         }
-        if (importacao.startsWith("java.net.") && !servidorOuCliente) {
-            violacoes.add(caminho + " importa " + importacao + " fora de server/client");
+        boolean clienteIa = pacote.startsWith("br/unicesumar/chat/infraestrutura/ia")
+                && (importacao.equals("java.net.URI") || importacao.startsWith("java.net.http."));
+        if (importacao.startsWith("java.net.") && !servidorOuCliente && !clienteIa) {
+            violacoes.add(caminho + " importa " + importacao + " fora das camadas de rede autorizadas");
         }
         if (pacote.startsWith("br/unicesumar/chat/model")
                 && importacao.startsWith("br.unicesumar.chat.")

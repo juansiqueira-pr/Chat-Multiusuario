@@ -205,3 +205,12 @@ Formato de cada entrada (copie e preencha; mantenha curto):
 - **Testes:** `mvn -q test`: 55/55 passaram (43 unitários/arquitetura + 12 integrações; 0 falhas/erros/ignorados).
 - **Concorrência:** sem alteração na lógica compartilhada; rolagem e desenho Swing continuam restritos à EDT. A barra mantém navegação por roda, teclado e arraste fornecida pelo Swing.
 - **Próximo passo:** conferir o comportamento da barra em uma janela real no Windows, macOS ou Linux.
+
+### 2026-10-20 · Base de acesso ao Hugging Face
+
+- **Adicionado:** `java-dotenv` 5.2.2, resolvido pelo Maven Central; `ConfiguracaoIA` é a única classe que chama `Dotenv.load()` e valida/exibe instrução clara se `HF_TOKEN` estiver ausente. `ClienteHuggingFace` reutiliza `HttpClient`, envia JSON em UTF-8, usa timeout de conexão de 10 s e de requisição de 90 s, redige o token da mensagem de erro e converte falhas de rede/timeout/status HTTP em `FalhaInferenciaException`. IDs de modelos e endpoints ficaram em `chat.properties`.
+- **Arquitetura autorizada:** acrescentado `infraestrutura/ia`; `ArquiteturaTest` permite nesse pacote somente `java.net.URI` e `java.net.http.*`. A leitura do token continua centralizada. Não há funcionalidades de moderação, resumo, termômetro ou `/hacker` implementadas.
+- **Teste manual executado:** `ConectividadeManualHuggingFace` chamou os quatro modelos. `unitary/multilingual-toxic-xlm-roberta` → HTTP 402, “You have no remaining credits. Purchase pre-paid credits to continue using Inference Providers. Alternatively, subscribe to PRO to get monthly included credits.”; `Qwen/Qwen2.5-1.5B-Instruct` → HTTP 400, “The requested model 'Qwen/Qwen2.5-1.5B-Instruct' is not supported by any provider you have enabled.”; `cardiffnlp/twitter-xlm-roberta-base-sentiment` → mesmo HTTP 402 de créditos; `Qwen/Qwen3.8-27B` → mesmo HTTP 402 de créditos. Não houve resposta de inferência bem-sucedida; nenhum modelo, provedor ou payload alternativo foi tentado.
+- **Testes automáticos:** testes locais validam token ausente, cabeçalho bearer, corpo UTF-8, resposta de sucesso e erro HTTP. `mvn -q test`: 59/59 passaram (47 unitários/arquitetura + 12 integrações; 0 falhas/erros/ignorados). A classe de conectividade não possui `@Test` e não roda na suíte automática.
+- **Segurança:** `.env` está ignorado pelo Git e não rastreado; seu conteúdo não foi impresso nem registrado. O teste só imprime dados da resposta e mensagens de erro saneadas.
+- **Próximo passo:** habilitar créditos/provedor no Hugging Face e repetir a conectividade antes da Fase 1.

@@ -38,7 +38,7 @@ Entregáveis: código (cliente e servidor), `schema.sql`, relatório curto (arqu
 ## 5. Stack
 
 Java 17+ (use o JDK instalado; confirme com `java -version`), Maven, JUnit 5, H2. Log com `java.util.logging`.
-Sem Spring, Hibernate/JPA, Lombok, Docker, mensageria nem `java.nio` Selector. Dependência nova só com justificativa registrada no relatório.
+Sem Spring, Hibernate/JPA, Lombok, Docker, mensageria nem `java.nio` Selector. `java-dotenv` é a exceção aprovada, usada apenas por `ConfiguracaoIA` para carregar `HF_TOKEN`; outra dependência nova precisa de justificativa registrada no relatório.
 **Não copie código de projetos externos** (ex.: repositórios do GitHub): implemente do zero nesta arquitetura.
 
 ## 6. Pacotes (base `br.unicesumar.chat`)
@@ -51,6 +51,7 @@ service/             ChatService, ClientRegistry, ConexaoCliente (interface), Fa
 server/              Servidor (tem o main), ClienteHandler, Protocolo                 <- ÚNICO lugar com Socket no servidor
 client/              ClienteChat (tem o main)
 config/              Config
+infraestrutura/ia/   ConfiguracaoIA, ClienteHuggingFace, FalhaInferenciaException
 src/main/resources/  schema.sql, chat.properties
 src/test/java/...    model/ service/ persistence/ integracao/ support/ (InMemoryMensagemRepository, FakeConexao)
 ```
@@ -70,6 +71,7 @@ persistence/jdbc --> persistence (interface), model
 ```
 
 - Proibido: `model` importar JDBC, Socket, arquivos ou outras camadas; `service` importar `java.net`, `java.sql`, `ClienteHandler` ou `JdbcMensagemRepository`; `client` importar `service` ou `persistence`; SQL fora de `persistence/jdbc`.
+- Exceção aprovada para a base de IA: somente `infraestrutura/ia` pode importar `java.net.URI` e `java.net.http.*` para acessar a API do Hugging Face. `Dotenv` só pode ser chamado por `ConfiguracaoIA`; nenhum outro código pode ler `HF_TOKEN` diretamente.
 - Inversão de dependência: `ChatService -> MensagemRepository <- JdbcMensagemRepository` e `ChatService -> ConexaoCliente <- ClienteHandler`. As implementações concretas são criadas em **um único ponto de montagem** (`Servidor.main`) e injetadas pelo construtor.
 - Exceções: de negócio (`MensagemInvalida`, `UsuarioInvalido`, `NomeEmUso`) estendem `Exception`; de infraestrutura (`PersistenciaException`, `FalhaEnvioException`) estendem `RuntimeException`.
 - Regra prática: socket não conhece SQL; repository não conhece socket; model não conhece nenhum dos dois; service conecta as partes.
