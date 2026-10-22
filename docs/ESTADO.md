@@ -2,10 +2,10 @@
 
 > Mapa compacto para o agente **não precisar varrer o repositório**. **Sobrescreva** a cada tarefa (não acumule histórico aqui; o histórico vai em `RELATORIO_DESENVOLVIMENTO.md`). Mantenha em até ~100 linhas.
 
-**Atualizado em:** 2026-10-20 · **Fase atual:** base Hugging Face configurada; conectividade bloqueada
+**Atualizado em:** 2026-10-21 · **Fase atual:** base Groq configurada; conectividade manual pendente
 **Marco "núcleo obrigatório completo":** ✅ atingido
-**Testes:** 47 unitários/arquitetura + 12 integrações = 59; 0 falhas/erros/ignorados. `mvn -q test` passou; classe manual tentou os quatro modelos.
-**Próximo passo:** habilitar créditos e um provedor para Qwen2.5-1.5B-Instruct; repetir o teste manual antes de iniciar a Fase 1. Não trocar modelos automaticamente.
+**Testes:** última execução anterior: 47 unitários/arquitetura + 12 integrações = 59 verdes. Para esta tarefa, Maven ainda não executou: o ambiente bloqueou locks no `.m2` e a rede ao tentar repositório local alternativo.
+**Próximo passo:** corrigir a permissão organizacional informada pelo Groq para `openai/gpt-oss-safeguard-20b` e repetir só a chamada de moderação. Nenhuma funcionalidade de IA está conectada ao chat.
 
 Legenda: ⬜ pendente · 🟡 em andamento · ✅ pronto e testado
 
@@ -67,6 +67,9 @@ Entregáveis: código ✅ · `schema.sql` ✅ · README ✅ · relatório final 
 | client/gui/TelaConexao, ListaMensagens, TelaChat | Entrada, conversa, histórico, estados, envio e reconexão manual | ✅ |
 | client/gui/PainelTransicao, ClienteChatGui | Fade cruzado, EDT, conexão e executor serial de envio | ✅ |
 | client/gui/CapturarComponentes, CapturarTelas (test/manual) | Geração de PNG em `BufferedImage`, não executadas pela suíte | ✅ |
+| infraestrutura/ia/ConfiguracaoIA | Lê `GROQ_API_KEY` e os dois modelos configurados | ✅ |
+| infraestrutura/ia/ClienteGroq | Chat completions, timeout, erros HTTP/rede, 429 sem retry | ✅ |
+| test/ia/ConectividadeManualGroq | Quatro usos: 3 responderam; moderação bloqueada (HTTP 403) | 🟡 |
 | config/Config | Lê `chat.properties` com valores padrão | ✅ |
 | resources/schema.sql, chat.properties | Script da tabela; configuração | ✅ |
 | test/support/InMemoryMensagemRepository, FakeConexao | Dublês de teste | ✅ |

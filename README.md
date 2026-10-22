@@ -34,14 +34,14 @@ Edite `src/main/resources/chat.properties` antes de iniciar o servidor:
 
 Se `chat.properties` não estiver no classpath, `Config` usa esses valores padrão.
 
-Para testar manualmente o acesso ao Hugging Face, crie `.env` na raiz com `HF_TOKEN=seu_token` (o arquivo é ignorado pelo Git). Os endpoints e IDs dos quatro modelos ficam nas propriedades `ia.*` deste mesmo `chat.properties`. Execute o teste manual, que não faz parte da suíte automática:
+Para testar manualmente o acesso ao Groq, mantenha `.env` na raiz com `GROQ_API_KEY=sua_chave` (o arquivo é ignorado pelo Git). Os dois IDs de modelo ficam nas propriedades `ia.modelo.*` de `chat.properties`; moderação usa `openai/gpt-oss-safeguard-20b` e os outros três usos usam `openai/gpt-oss-20b`. Execute o teste manual, que não faz parte da suíte automática:
 
 ```powershell
 mvn -q test-compile
-mvn -q exec:java "-Dexec.mainClass=br.unicesumar.chat.infraestrutura.ia.ConectividadeManualHuggingFace" "-Dexec.classpathScope=test"
+mvn -q exec:java "-Dexec.mainClass=br.unicesumar.chat.infraestrutura.ia.ConectividadeManualGroq" "-Dexec.classpathScope=test"
 ```
 
-O token precisa ter permissão de **Inference Providers** e saldo/créditos disponíveis. O teste informa o erro recebido por cada modelo; ele não troca modelos ou provedores automaticamente.
+A chave pode ser criada no painel do Groq. O modelo de moderação tem limite baixo (3 requisições por minuto na tabela pública); ao receber HTTP 429, o cliente devolve a falha e não repete nem espera automaticamente. O teste informa o resultado de cada uso; ele não troca modelos.
 
 ## 4. Compilar e testar
 

@@ -6,45 +6,29 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-/** Carrega o token Hugging Face e os modelos definidos em chat.properties. */
+/** Carrega a chave Groq e os modelos definidos em chat.properties. */
 public final class ConfiguracaoIA {
-    private static final String MENSAGEM_TOKEN_AUSENTE = "Configuração da IA ausente: defina HF_TOKEN no arquivo "
-            + ".env na raiz do projeto (ex.: HF_TOKEN=seu_token).";
+    private static final String MENSAGEM_CHAVE_AUSENTE = "Configuração da IA ausente: defina GROQ_API_KEY no arquivo "
+            + ".env na raiz do projeto (ex.: GROQ_API_KEY=sua_chave).";
 
-    private final String token;
-    private final String urlClassificacao;
-    private final String urlChat;
+    private final String chaveGroq;
     private final String modeloModeracao;
     private final String modeloResumo;
     private final String modeloClima;
     private final String modeloHacker;
 
-    /** Carrega HF_TOKEN pelo Dotenv e os modelos pelo recurso chat.properties. */
+    /** Carrega GROQ_API_KEY pelo Dotenv e os modelos pelo recurso chat.properties. */
     public ConfiguracaoIA() {
-        this.token = validarToken(carregarToken());
+        this.chaveGroq = validarChaveGroq(carregarChaveGroq());
         Properties propriedades = carregarPropriedades();
-        urlClassificacao = propriedade(propriedades, "ia.url.classificacao");
-        urlChat = propriedade(propriedades, "ia.url.chat");
         modeloModeracao = propriedade(propriedades, "ia.modelo.moderacao");
         modeloResumo = propriedade(propriedades, "ia.modelo.resumo");
         modeloClima = propriedade(propriedades, "ia.modelo.clima");
         modeloHacker = propriedade(propriedades, "ia.modelo.hacker");
     }
 
-    /** Retorna o token carregado sem registrá-lo ou formatá-lo em logs. */
-    public String getToken() { return token; }
-
-    /** Retorna a URL de classificação para o modelo de moderação. */
-    public String getUrlModeracao() { return urlClassificacao + modeloModeracao; }
-
-    /** Retorna a URL de chat completions usada pelo modelo de resumo. */
-    public String getUrlResumo() { return urlChat; }
-
-    /** Retorna a URL de classificação para o modelo de sentimento. */
-    public String getUrlClima() { return urlClassificacao + modeloClima; }
-
-    /** Retorna a URL de chat completions usada pelo modelo hacker. */
-    public String getUrlHacker() { return urlChat; }
+    /** Retorna a chave Groq sem registrá-la ou formatá-la em logs. */
+    public String getChaveGroq() { return chaveGroq; }
 
     /** Retorna o identificador do modelo de moderação. */
     public String getModeloModeracao() { return modeloModeracao; }
@@ -58,16 +42,16 @@ public final class ConfiguracaoIA {
     /** Retorna o identificador do modelo hacker. */
     public String getModeloHacker() { return modeloHacker; }
 
-    static String validarToken(String valor) {
-        if (valor == null || valor.isBlank()) throw new IllegalStateException(MENSAGEM_TOKEN_AUSENTE);
+    static String validarChaveGroq(String valor) {
+        if (valor == null || valor.isBlank()) throw new IllegalStateException(MENSAGEM_CHAVE_AUSENTE);
         return valor.trim();
     }
 
-    private static String carregarToken() {
+    private static String carregarChaveGroq() {
         try {
-            return Dotenv.load().get("HF_TOKEN");
+            return Dotenv.load().get("GROQ_API_KEY");
         } catch (RuntimeException excecao) {
-            throw new IllegalStateException(MENSAGEM_TOKEN_AUSENTE, excecao);
+            throw new IllegalStateException(MENSAGEM_CHAVE_AUSENTE, excecao);
         }
     }
 

@@ -7,16 +7,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ConfiguracaoIATest {
     @Test
-    void tokenAusenteGeraInstrucaoSemExporValor() {
+    void chaveGroqAusenteGeraInstrucaoSemExporValor() {
         IllegalStateException excecao = assertThrows(IllegalStateException.class,
-                () -> ConfiguracaoIA.validarToken("  "));
+                () -> ConfiguracaoIA.validarChaveGroq("  "));
 
-        assertEquals("Configuração da IA ausente: defina HF_TOKEN no arquivo .env na raiz do projeto "
-                + "(ex.: HF_TOKEN=seu_token).", excecao.getMessage());
+        assertEquals("Configuração da IA ausente: defina GROQ_API_KEY no arquivo .env na raiz do projeto "
+                + "(ex.: GROQ_API_KEY=sua_chave).", excecao.getMessage());
     }
 
     @Test
-    void tokenConfiguradoEDevolvidoSemEspacosExcedentes() {
-        assertEquals("hf_valido", ConfiguracaoIA.validarToken(" hf_valido "));
+    void chaveConfiguradaEDevolvidaSemEspacosExcedentes() {
+        assertEquals("gsk_valido", ConfiguracaoIA.validarChaveGroq(" gsk_valido "));
     }
 }
