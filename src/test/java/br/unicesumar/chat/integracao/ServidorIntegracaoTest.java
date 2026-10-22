@@ -6,6 +6,8 @@ import br.unicesumar.chat.persistence.jdbc.JdbcMensagemRepository;
 import br.unicesumar.chat.server.Servidor;
 import br.unicesumar.chat.service.ChatService;
 import br.unicesumar.chat.service.ClientRegistry;
+import br.unicesumar.chat.service.AssistenteTecnico;
+import br.unicesumar.chat.service.AssistenteIndisponivelException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,13 +43,17 @@ class ServidorIntegracaoTest {
 
     @BeforeEach
     void iniciarServidor() {
+        iniciarServidor(pergunta -> "Resposta educativa para: " + pergunta);
+    }
+
+    private void iniciarServidor(AssistenteTecnico assistente) {
         String nomeBanco = "tcp_" + UUID.randomUUID().toString().replace("-", "");
         ConnectionFactory conexoes = new ConnectionFactory(
                 "jdbc:h2:mem:" + nomeBanco + ";DB_CLOSE_DELAY=-1", "sa", "");
         new InicializadorSchema(conexoes).inicializar();
         ChatService servico = new ChatService(new JdbcMensagemRepository(conexoes), new ClientRegistry(),
                 Clock.fixed(Instant.parse("2026-10-13T12:30:00Z"), ZoneOffset.UTC), 20,
-                texto -> false, mensagens -> "Resumo: " + mensagens.getLast().getConteudo());
+                texto -> false, mensagens -> "Resumo: " + mensagens.getLast().getConteudo(), assistente);
         servidor = new Servidor(0, servico);
         servidor.iniciar();
     }
@@ -169,6 +175,43 @@ class ServidorIntegracaoTest {
         assertTrue(ana.aguardar(linha -> linha.equals("! resumo indisponível neste momento")));
         ana.enviar("servidor-continua");
         assertTrue(ana.aguardar(linha -> linha.contains("servidor-continua")));
+    }
+
+    @Test
+    void comandoHackerRespondeSomenteAoSolicitante() throws Exception {
+        ClienteTeste ana = conectar("ana");
+        ClienteTeste bruno = conectar("bruno");
+
+        ana.enviar("/hacker como proteger meu servidor?");
+        assertTrue(ana.aguardar(linha -> linha.equals(
+                "* Assistente técnico: Resposta educativa para: como proteger meu servidor?")));
+        ana.enviar("marcador-hacker-privado");
+        List<String> linhasBruno = bruno.aguardarAte(linha -> linha.contains("marcador-hacker-privado"));
+        assertFalse(linhasBruno.stream().anyMatch(linha -> linha.contains("Assistente técnico:")));
+    }
+
+    @Test
+    void falhaDoAssistenteNaoEncerraClienteNemServidor() throws Exception {
+        servidor.parar();
+        iniciarServidor(pergunta -> {
+            throw new AssistenteIndisponivelException("modelo indisponível", null);
+        });
+        ClienteTeste ana = conectar("ana");
+
+        ana.enviar("/hacker explique TLS");
+        assertTrue(ana.aguardar(linha -> linha.equals("! assistente técnico indisponível neste momento")));
+        ana.enviar("servidor-segue-ativo");
+        assertTrue(ana.aguardar(linha -> linha.contains("servidor-segue-ativo")));
+    }
+
+    @Test
+    void comandoHackerSemPerguntaRecebeInstrucaoPrivada() throws Exception {
+        ClienteTeste ana = conectar("ana");
+        ana.enviar("/hacker");
+
+        assertTrue(ana.aguardar(linha -> linha.equals("! use: /hacker <pergunta>")));
+        ana.enviar("ainda-conectado");
+        assertTrue(ana.aguardar(linha -> linha.contains("ainda-conectado")));
     }
 
     private ClienteTeste conectar(String nick) throws Exception {

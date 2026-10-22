@@ -28,6 +28,15 @@ class ProtocoloTest {
     }
 
     @Test
+    void reconheceHackerESeparaPerguntaDoComando() {
+        assertEquals(new Protocolo.Resultado(Protocolo.Tipo.CONSULTAR_HACKER,
+                        "como proteger meu servidor de senhas fracas?"),
+                protocolo.interpretar("/hacker como proteger meu servidor de senhas fracas?"));
+        assertEquals(new Protocolo.Resultado(Protocolo.Tipo.CONSULTAR_HACKER, ""),
+                protocolo.interpretar("/hacker"));
+    }
+
+    @Test
     void classificaOutrosComandosComoDesconhecidos() {
         assertEquals(new Protocolo.Resultado(Protocolo.Tipo.COMANDO_DESCONHECIDO, "/privado ana oi"),
                 protocolo.interpretar("/privado ana oi"));

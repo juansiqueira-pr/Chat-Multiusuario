@@ -60,7 +60,7 @@ mvn -q package
 mvn -q test
 ```
 
-A suíte tem testes unitários de modelo, registry, serviço, protocolo e configuração; integração JDBC com H2 em memória; e integração TCP com sockets reais para broadcast, histórico, desconexão abrupta, nick duplicado e mensagem vazia.
+A suíte tem testes unitários de modelo, registry, serviço, protocolo e configuração; integração JDBC com H2 em memória; e integração TCP com sockets reais para broadcast, histórico, resumo privado, `/hacker`, desconexão abrupta, nick duplicado e falhas de IA.
 
 ## 5. Iniciar o servidor
 
@@ -90,10 +90,12 @@ Exemplo de sessão: Ana digita `Oi, pessoal!`; os clientes veem `[13/10 09:00] a
 
 - `/quit`: encerra a conexão atual.
 - `/historico` (ou `/histórico`): pede um resumo curto das últimas mensagens; a resposta aparece apenas para quem pediu. Requer `GROQ_API_KEY` no `.env`.
+- `/hacker <pergunta>`: consulta o assistente técnico Groq. O prompt restringe a resposta a uso educativo e autorizado e pede recusa de ataques reais; a resposta fica privada. Requer `GROQ_API_KEY` no `.env`.
 - Mensagem: `[dd/MM HH:mm] nome: texto`.
 - Sistema: `* texto` (entrada/saída e avisos).
 - Erro: `! texto` (só para o remetente).
 - Se o serviço de resumo estiver indisponível, o solicitante recebe `! resumo indisponível neste momento`; o chat continua funcionando.
+- Se o assistente técnico estiver indisponível, o solicitante recebe `! assistente técnico indisponível neste momento`; perguntas sem texto mostram `! use: /hacker <pergunta>`.
 
 ## 8. Histórico e banco
 
@@ -138,6 +140,7 @@ br.unicesumar.chat
 - `ClienteHandler.enviar()` é sincronizado para não misturar linhas no mesmo socket.
 - `ChatService.ordemLock` serializa salvar+broadcast e registrar+enviar histórico.
 - O resumo usa uma cópia das mensagens recentes; a consulta ao Groq acontece sem segurar `ordemLock` e sua resposta é privada.
+- A consulta `/hacker` também ocorre na thread do solicitante, fora de `ordemLock`, e sua resposta é privada.
 
 ## 12. Solução de problemas
 
@@ -159,4 +162,4 @@ br.unicesumar.chat
 
 IA generativa foi usada como apoio à implementação, aos testes e à documentação; decisões e código devem ser revisados e explicados pelo aluno. O histórico de desenvolvimento está em [docs/RELATORIO_DESENVOLVIMENTO.md](docs/RELATORIO_DESENVOLVIMENTO.md).
 
-O sistema não tem autenticação, salas, mensagens privadas, TLS, timeout de inatividade ou reconexão automática. Os nicks identificam clientes apenas durante a conexão.
+O sistema não tem autenticação, salas, mensagens privadas entre usuários, TLS, timeout de inatividade ou reconexão automática. Os nicks identificam clientes apenas durante a conexão. A política do `/hacker` é uma instrução ao modelo e não substitui autorização, revisão humana ou controles de segurança.

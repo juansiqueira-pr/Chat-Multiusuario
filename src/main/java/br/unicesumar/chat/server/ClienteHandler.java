@@ -5,6 +5,7 @@ import br.unicesumar.chat.model.Usuario;
 import br.unicesumar.chat.model.UsuarioInvalidoException;
 import br.unicesumar.chat.service.ChatService;
 import br.unicesumar.chat.service.ConexaoCliente;
+import br.unicesumar.chat.service.AssistenteIndisponivelException;
 import br.unicesumar.chat.service.FalhaEnvioException;
 import br.unicesumar.chat.service.NomeEmUsoException;
 import br.unicesumar.chat.service.ResumoIndisponivelException;
@@ -131,6 +132,19 @@ public final class ClienteHandler implements Runnable, ConexaoCliente {
                     } catch (ResumoIndisponivelException excecao) {
                         registrador.warning("Resumo indisponível neste momento: " + excecao.getMessage());
                         enviar(ChatService.PREFIXO_ERRO + "resumo indisponível neste momento");
+                    }
+                }
+                case CONSULTAR_HACKER -> {
+                    if (resultado.conteudo().isBlank()) {
+                        enviar(ChatService.PREFIXO_ERRO + "use: /hacker <pergunta>");
+                        continue;
+                    }
+                    try {
+                        enviar(ChatService.PREFIXO_SISTEMA + "Assistente técnico: "
+                                + servico.consultarAssistente(resultado.conteudo()));
+                    } catch (AssistenteIndisponivelException excecao) {
+                        registrador.warning("Assistente técnico indisponível: " + excecao.getMessage());
+                        enviar(ChatService.PREFIXO_ERRO + "assistente técnico indisponível neste momento");
                     }
                 }
                 case COMANDO_DESCONHECIDO -> enviar(ChatService.PREFIXO_ERRO + "comando desconhecido");

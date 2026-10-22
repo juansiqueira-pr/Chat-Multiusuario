@@ -9,6 +9,7 @@ public final class Protocolo {
         MENSAGEM,
         SAIR,
         RESUMIR_HISTORICO,
+        CONSULTAR_HACKER,
         COMANDO_DESCONHECIDO
     }
 
@@ -24,6 +25,10 @@ public final class Protocolo {
         }
         if ("/historico".equalsIgnoreCase(linha) || "/histórico".equalsIgnoreCase(linha)) {
             return new Resultado(Tipo.RESUMIR_HISTORICO, linha);
+        }
+        if (linha.equalsIgnoreCase("/hacker") || linha.regionMatches(true, 0, "/hacker ", 0, 8)) {
+            String pergunta = linha.length() <= 8 ? "" : linha.substring(8).trim();
+            return new Resultado(Tipo.CONSULTAR_HACKER, pergunta);
         }
         if (linha.startsWith("/")) {
             return new Resultado(Tipo.COMANDO_DESCONHECIDO, linha);

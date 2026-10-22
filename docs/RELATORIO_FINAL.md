@@ -56,6 +56,7 @@ sequenceDiagram
 | Ordem do serviço | `ordemLock` protege salvar+broadcast e registrar+histórico; clientes lentos reduzem paralelismo. |
 | Saída de cada handler | `enviar()` sincronizado; uma linha completa por escrita. |
 | Resumo de histórico | Snapshot das últimas mensagens; consulta Groq fora de `ordemLock`; resposta somente ao solicitante. |
+| Assistente `/hacker` | Política de uso educativo/autorizado no prompt; requisição fora de `ordemLock`; resposta somente ao solicitante. |
 | Handlers do servidor | Conjunto concorrente; `parar()` fecha servidor e sockets ativos. |
 | Conexão dos clientes console e Swing | `ConexaoChat` usa UTF-8, escrita sincronizada, cancelamento idempotente; leitura notifica o ouvinte em thread própria. |
 | Componentes Swing | Só a EDT altera telas; callbacks de rede usam `SwingUtilities.invokeLater`. |
@@ -70,10 +71,12 @@ O fechamento da GUI durante conexão/leitura também fecha o socket e os streams
 
 O comando `/historico` (também `/histórico`) resume as mensagens recentes com Groq e responde em privado. `ServidorIntegracaoTest` comprova privacidade e continuidade do chat quando o modelo falha; o teste local de HTTP valida o formato de resposta.
 
+`/hacker <pergunta>` usa o modelo configurado para dar orientação técnica em contexto educativo/autorizado, recusando instruções de ataques reais e sugerindo alternativas defensivas. O prompt não substitui autorização nem garante, por si só, a segurança da resposta; o comando é privado e falhas não encerram a conexão. `ServidorIntegracaoTest` e `AssistenteTecnicoGroqTest` cobrem privacidade, falha e chamada HTTP simulada.
+
 O H2 usa `./data/chat`; o schema é inicializado com `CREATE ... IF NOT EXISTS`. O histórico busca os últimos IDs em ordem decrescente e os inverte para a ordem cronológica. Os testes JDBC usam bancos em memória com nome aleatório.
 
 ## Escopo, extras e declaração de IA
 
-Os extras não foram implementados. Sugestões para evolução: timeout/heartbeat de inatividade; teste de carga com muitos sockets concorrentes; e teste de reinicialização que demonstre persistência após encerrar o servidor.
+O termômetro do clima ainda não foi implementado. Sugestões para evolução: timeout/heartbeat de inatividade; teste de carga com muitos sockets concorrentes; e teste de reinicialização que demonstre persistência após encerrar o servidor.
 
 IA generativa auxiliou implementação, testes e documentação. O aluno deve revisar e conseguir explicar o código e as decisões; o log está em [docs/RELATORIO_DESENVOLVIMENTO.md](RELATORIO_DESENVOLVIMENTO.md).

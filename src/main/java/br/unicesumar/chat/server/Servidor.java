@@ -6,6 +6,7 @@ import br.unicesumar.chat.infraestrutura.ia.ConfiguracaoIA;
 import br.unicesumar.chat.infraestrutura.ia.ModeradorGroq;
 import br.unicesumar.chat.infraestrutura.ia.ModeradorResiliente;
 import br.unicesumar.chat.infraestrutura.ia.ResumidorGroq;
+import br.unicesumar.chat.infraestrutura.ia.AssistenteTecnicoGroq;
 import br.unicesumar.chat.persistence.jdbc.ConnectionFactory;
 import br.unicesumar.chat.persistence.jdbc.InicializadorSchema;
 import br.unicesumar.chat.persistence.jdbc.JdbcMensagemRepository;
@@ -14,6 +15,8 @@ import br.unicesumar.chat.service.ClientRegistry;
 import br.unicesumar.chat.service.ModeradorDeMensagens;
 import br.unicesumar.chat.service.ResumidorDeConversa;
 import br.unicesumar.chat.service.ResumoIndisponivelException;
+import br.unicesumar.chat.service.AssistenteTecnico;
+import br.unicesumar.chat.service.AssistenteIndisponivelException;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -138,16 +141,22 @@ public final class Servidor {
             throw new ResumoIndisponivelException(
                     "Resumo indisponível: configure GROQ_API_KEY no arquivo .env.", null);
         };
+        AssistenteTecnico assistente = pergunta -> {
+            throw new AssistenteIndisponivelException(
+                    "Assistente técnico indisponível: configure GROQ_API_KEY no arquivo .env.", null);
+        };
         try {
             ConfiguracaoIA configuracaoIA = new ConfiguracaoIA();
             ClienteGroq clienteGroq = new ClienteGroq();
             moderador = new ModeradorResiliente(new ModeradorGroq(clienteGroq, configuracaoIA));
             resumidor = new ResumidorGroq(clienteGroq, configuracaoIA);
+            assistente = new AssistenteTecnicoGroq(clienteGroq, configuracaoIA);
         } catch (IllegalStateException excecao) {
-            registrador.warning("Moderação indisponível por falta de configuração; mensagens serão liberadas.");
+            registrador.warning("IA Groq indisponível por falta de configuração; mensagens serão liberadas e "
+                    + "resumo/assistente técnico informarão indisponibilidade.");
         }
         ChatService servico = new ChatService(repositorio, registro, java.time.Clock.systemDefaultZone(),
-                config.getHistoricoTamanho(), moderador, resumidor);
+                config.getHistoricoTamanho(), moderador, resumidor, assistente);
         Servidor servidor = new Servidor(config.getPorta(), servico);
         servidor.iniciar();
         registrador.info("Servidor iniciado na porta " + servidor.getPortaLocal() + ".");

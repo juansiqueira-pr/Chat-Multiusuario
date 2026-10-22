@@ -23,6 +23,7 @@ public final class ChatService {
     private final int tamanhoHistorico;
     private final ModeradorDeMensagens moderador;
     private final ResumidorDeConversa resumidor;
+    private final AssistenteTecnico assistenteTecnico;
     private final Object ordemLock = new Object();
     private final Logger registrador = Logger.getLogger(ChatService.class.getName());
 
@@ -43,12 +44,21 @@ public final class ChatService {
     public ChatService(MensagemRepository repositorio, ClientRegistry registro, Clock relogio,
                        int tamanhoHistorico, ModeradorDeMensagens moderador,
                        ResumidorDeConversa resumidor) {
+        this(repositorio, registro, relogio, tamanhoHistorico, moderador, resumidor,
+                pergunta -> { throw new AssistenteIndisponivelException("Assistente técnico indisponível.", null); });
+    }
+
+    /** Cria o serviço com dependências de moderação, resumo e assistência técnica injetadas. */
+    public ChatService(MensagemRepository repositorio, ClientRegistry registro, Clock relogio,
+                       int tamanhoHistorico, ModeradorDeMensagens moderador,
+                       ResumidorDeConversa resumidor, AssistenteTecnico assistenteTecnico) {
         this.repositorio = Objects.requireNonNull(repositorio);
         this.registro = Objects.requireNonNull(registro);
         this.relogio = Objects.requireNonNull(relogio);
         this.tamanhoHistorico = tamanhoHistorico;
         this.moderador = Objects.requireNonNull(moderador);
         this.resumidor = Objects.requireNonNull(resumidor);
+        this.assistenteTecnico = Objects.requireNonNull(assistenteTecnico);
     }
 
     /** Registra a conexão, confirma o nick, envia o histórico e anuncia a entrada em ordem única. */
@@ -141,6 +151,11 @@ public final class ChatService {
             return "Ainda não há mensagens para resumir.";
         }
         return resumidor.resumir(mensagens);
+    }
+
+    /** Consulta o assistente técnico fora do lock de ordenação do chat. */
+    public String consultarAssistente(String pergunta) {
+        return assistenteTecnico.responder(Objects.requireNonNull(pergunta));
     }
 
     private List<Mensagem> buscarHistoricoSemLock() {
