@@ -2,9 +2,9 @@
 
 > Mapa compacto do estado atual; histórico de mudanças em `RELATORIO_DESENVOLVIMENTO.md`.
 
-**Atualizado em:** 2026-10-22 · **Fase atual:** assistente técnico privado `/hacker`
+**Atualizado em:** 2026-10-22 · **Fase atual:** assistente `/hacker` e legibilidade da resposta
 **Marco "núcleo obrigatório completo":** ✅ atingido
-**Testes:** `mvn -q test` passou: 78 testes, 0 falhas, 0 erros, 0 ignorados (61 unitários/visuais/arquitetura + 17 integrações).
+**Testes:** `mvn -q test` passou: 79 testes, 0 falhas, 0 erros, 0 ignorados (62 unitários/visuais/arquitetura + 17 integrações).
 **Próximo passo:** implementar termômetro do clima quando solicitado.
 
 ## Requisitos obrigatórios
@@ -43,9 +43,10 @@ Vídeo com 3+ clientes: ⬜ responsabilidade do aluno. Marco de núcleo completo
 - Moderação: `ModeradorDeMensagens`, `ModeradorGroq`, `ModeradorResiliente`; mensagens permitidas seguem para persistência e broadcast, ofensivas são recusadas privadamente.
 - Resumo: `ResumidorDeConversa`, `ResumidorGroq`; `/historico` e `/histórico` resumem as últimas `historico.tamanho` mensagens e respondem apenas ao solicitante.
 - Assistente técnico: `AssistenteTecnico`, `AssistenteTecnicoGroq`; `/hacker <pergunta>` consulta o modelo configurado para orientação educativa/defensiva e responde apenas ao solicitante.
+- Interface `/hacker`: `ListaMensagens` apresenta a resposta em cartão próprio com largura adaptável, quebra automática, texto selecionável e cores para os temas claro/escuro (`ListaMensagensVisualTest`).
 - Configuração de IA: `ConfiguracaoIA` lê `GROQ_API_KEY`; `ClienteGroq` centraliza HTTP e tratamento de rede, timeout e erros da API.
 - Falhas de resumo/assistente: exceções específicas geram aviso privado; outras conexões continuam ativas.
-- Testes da etapa: `AssistenteTecnicoGroqTest`, `ProtocoloTest` e `ServidorIntegracaoTest` cobrem política enviada, resposta, comando, privacidade, pergunta vazia e falha.
+- Testes da etapa: `AssistenteTecnicoGroqTest`, `ProtocoloTest`, `ServidorIntegracaoTest` e `ListaMensagensVisualTest` cobrem política enviada, resposta, comando, privacidade, pergunta vazia, falha e apresentação legível.
 
 ## Decisões fixas
 

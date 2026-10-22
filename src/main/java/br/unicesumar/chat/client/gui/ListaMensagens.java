@@ -22,6 +22,7 @@ import java.util.Deque;
 
 /** Apresenta até 500 itens, respeita rolagem manual e anima a chegada/rolagem. */
 public final class ListaMensagens extends JPanel {
+    private static final String PREFIXO_ASSISTENTE = "Assistente técnico: ";
     private final ModeloConversa modelo;
     private final Animacao animacao;
     private final JPanel itens = new JPanel();
@@ -107,7 +108,10 @@ public final class ListaMensagens extends JPanel {
         boolean auto = seguindoFim;
         modelo.adicionar(linha);
         ModeloConversa.Item item = modelo.itens().getLast();
-        if (item.linha().tipo() == LinhaServidor.Tipo.MENSAGEM && vazio.getParent() == itens) itens.remove(vazio);
+        boolean respostaAssistente = item.linha().tipo() == LinhaServidor.Tipo.SISTEMA
+                && item.linha().texto().startsWith(PREFIXO_ASSISTENTE);
+        if ((item.linha().tipo() == LinhaServidor.Tipo.MENSAGEM || respostaAssistente)
+                && vazio.getParent() == itens) itens.remove(vazio);
         JPanel componente = criarLinha(item);
         componentes.addLast(componente);
         itens.add(componente);
@@ -140,6 +144,7 @@ public final class ListaMensagens extends JPanel {
         for (JPanel painel : componentes) {
             for (java.awt.Component filho : painel.getComponents()) {
                 if (filho instanceof BolhaMensagem bolha) bolha.setTemaClaro(claro);
+                if (filho instanceof RespostaAssistente resposta) resposta.setTemaClaro(claro);
             }
         }
         novasMensagens.setForeground(claro ? new Color(0x101828) : Tema.TEXTO);
@@ -164,6 +169,13 @@ public final class ListaMensagens extends JPanel {
             bolha.setEntrada(0);
             linhaPainel.add(bolha);
             animacao.animar(bolha, 220, bolha::setEntrada);
+        } else if (linha.tipo() == LinhaServidor.Tipo.SISTEMA
+                && linha.texto().startsWith(PREFIXO_ASSISTENTE)) {
+            RespostaAssistente resposta = new RespostaAssistente(
+                    linha.texto().substring(PREFIXO_ASSISTENTE.length()));
+            resposta.setTemaClaro(temaClaro);
+            linhaPainel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 5));
+            linhaPainel.add(resposta);
         } else {
             JLabel pílula = new JLabel(linha.texto());
             pílula.setFont(Tema.fonte(11, Font.PLAIN));
@@ -186,6 +198,10 @@ public final class ListaMensagens extends JPanel {
                 if (componente instanceof BolhaMensagem bolha) bolha.setMaximumSize(
                         new java.awt.Dimension(limite, Integer.MAX_VALUE));
                 if (componente instanceof BolhaMensagem bolha) bolha.setLarguraMaxima(limite);
+                if (componente instanceof RespostaAssistente resposta) {
+                    resposta.setMaximumSize(new java.awt.Dimension(limite, Integer.MAX_VALUE));
+                    resposta.setLarguraMaxima(limite);
+                }
             }
         }
     }

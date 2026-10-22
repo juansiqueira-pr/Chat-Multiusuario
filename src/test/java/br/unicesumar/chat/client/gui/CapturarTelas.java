@@ -4,6 +4,7 @@ import br.unicesumar.chat.client.LinhaServidor;
 
 import javax.imageio.ImageIO;
 import javax.swing.JComponent;
+import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import java.awt.Component;
 import java.awt.Container;
@@ -42,6 +43,9 @@ public final class CapturarTelas {
                     chat.adicionar(LinhaServidor.interpretar("[13/10 09:" + (33 + indice) + "] "
                             + remetente + ": " + mensagens[indice]));
                 }
+                chat.adicionar(LinhaServidor.interpretar("* Assistente técnico: "
+                        + "Use consultas preparadas com parâmetros para separar os dados do comando SQL. "
+                        + "Assim, o conteúdo recebido não é executado como parte da consulta."));
                 salvar(chat, 1000, 680, destino.resolve("tela-chat.png"));
             } catch (Throwable excecao) {
                 falha.set(excecao);
@@ -55,6 +59,9 @@ public final class CapturarTelas {
     private static void salvar(JComponent componente, int largura, int altura, Path arquivo) throws Exception {
         componente.setSize(largura, altura);
         organizar(componente);
+        if (arquivo.getFileName().toString().equals("tela-chat.png")) {
+            rolarAoFim(componente);
+        }
         BufferedImage imagem = new BufferedImage(largura, altura, BufferedImage.TYPE_INT_ARGB);
         Graphics2D grafico = imagem.createGraphics();
         Tema.preparar(grafico);
@@ -68,6 +75,15 @@ public final class CapturarTelas {
         if (componente instanceof Container container) {
             container.doLayout();
             for (Component filho : container.getComponents()) organizar(filho);
+        }
+    }
+
+    private static void rolarAoFim(Component componente) {
+        if (componente instanceof JScrollPane painel) {
+            painel.getVerticalScrollBar().setValue(painel.getVerticalScrollBar().getMaximum());
+        }
+        if (componente instanceof Container recipiente) {
+            for (Component filho : recipiente.getComponents()) rolarAoFim(filho);
         }
     }
 }

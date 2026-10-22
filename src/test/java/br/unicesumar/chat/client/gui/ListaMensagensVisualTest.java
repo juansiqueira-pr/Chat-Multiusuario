@@ -5,11 +5,16 @@ import org.junit.jupiter.api.Test;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
+import javax.swing.JTextArea;
+import javax.swing.JLabel;
 import java.awt.Component;
 import java.awt.Container;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ListaMensagensVisualTest {
     @Test
@@ -23,10 +28,49 @@ class ListaMensagensVisualTest {
         assertEquals("Rolagem da conversa", barra.get().getAccessibleContext().getAccessibleName());
     }
 
+    @Test
+    void respostaDoAssistenteTemTextoSelecionavelComQuebraAutomatica() throws Exception {
+        String resposta = "Use consultas preparadas com parâmetros para separar os dados do comando SQL."
+                + " Não concatene o conteúdo recebido diretamente na consulta.";
+        AtomicReference<JTextArea> corpo = new AtomicReference<>();
+        AtomicReference<JLabel> vazio = new AtomicReference<>();
+        SwingUtilities.invokeAndWait(() -> {
+            ListaMensagens lista = new ListaMensagens("ana", new Animacao());
+            lista.adicionar(br.unicesumar.chat.client.LinhaServidor.interpretar(
+                    "* Assistente técnico: " + resposta));
+            localizarTexto(lista, corpo);
+            localizarRotulo(lista, "Diga olá", vazio);
+        });
+
+        assertNotNull(corpo.get(), "a resposta longa deve ser renderizada em um componente que quebra linhas");
+        assertEquals(resposta, corpo.get().getText());
+        assertTrue(corpo.get().getLineWrap());
+        assertTrue(corpo.get().getWrapStyleWord());
+        assertFalse(corpo.get().isEditable());
+        org.junit.jupiter.api.Assertions.assertNull(vazio.get(),
+                "a resposta deve ocupar o estado vazio da conversa");
+    }
+
     private void localizarBarra(Component componente, AtomicReference<JScrollBar> barra) {
         if (componente instanceof JScrollPane painel) barra.set(painel.getVerticalScrollBar());
         if (componente instanceof Container recipiente) {
             for (Component filho : recipiente.getComponents()) localizarBarra(filho, barra);
+        }
+    }
+
+    private void localizarTexto(Component componente, AtomicReference<JTextArea> texto) {
+        if (componente instanceof JTextArea area && area.getText().startsWith("Use consultas preparadas")) {
+            texto.set(area);
+        }
+        if (componente instanceof Container recipiente) {
+            for (Component filho : recipiente.getComponents()) localizarTexto(filho, texto);
+        }
+    }
+
+    private void localizarRotulo(Component componente, String valor, AtomicReference<JLabel> rotulo) {
+        if (componente instanceof JLabel etiqueta && valor.equals(etiqueta.getText())) rotulo.set(etiqueta);
+        if (componente instanceof Container recipiente) {
+            for (Component filho : recipiente.getComponents()) localizarRotulo(filho, valor, rotulo);
         }
     }
 }

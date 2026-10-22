@@ -260,3 +260,12 @@ Formato de cada entrada (copie e preencha; mantenha curto):
 - **Testes:** o teste inicial de protocolo falhou porque o novo tipo não existia. Depois, `AssistenteTecnicoGroqTest` verificou modelo, prompt, extração de resposta e resposta inválida com HTTP local simulado; `ServidorIntegracaoTest` verificou resposta privada, pergunta vazia e falha mantendo o chat ativo. `mvn -q test`: 78 testes, 0 falhas, 0 erros, 0 ignorados.
 - **Arquivos:** `AssistenteTecnico`, `AssistenteIndisponivelException`, `AssistenteTecnicoGroq`, `ChatService`, `Protocolo`, `ClienteHandler`, montagem de `Servidor`, testes, README, `docs/AGENTS.md`, `docs/ESTADO.md`, `docs/RELATORIO_FINAL.md` e este relatório.
 - **Limites / próximo passo:** não foi feita chamada manual ao endpoint Groq nesta etapa. A instrução no prompt orienta o modelo, mas não substitui autorização ou revisão humana. O termômetro do clima permanece pendente.
+
+### 2026-10-22 · Ajuste visual da resposta `/hacker`
+
+- **Adicionado:** `RespostaAssistente`, cartão próprio com cabeçalho, fundo contrastante nos temas claro/escuro, largura adaptável e corpo `JTextArea` selecionável com quebra automática de palavras. A resposta remove o estado vazio da conversa.
+- **Alterado:** `ListaMensagens` identifica a resposta do assistente e mantém as demais mensagens e avisos no desenho existente. O capturador mostra a conversa no fim para validar a resposta longa.
+- **Arquivos:** `src/main/java/br/unicesumar/chat/client/gui/RespostaAssistente.java`, `ListaMensagens.java`, `src/test/java/br/unicesumar/chat/client/gui/ListaMensagensVisualTest.java`, `CapturarTelas.java`, `docs/img/tela-chat.png`, `docs/ESTADO.md` e este relatório.
+- **Testes:** o teste visual falhou antes da alteração porque não havia área de texto para a resposta; após a alteração, `mvn -q -Dtest=ListaMensagensVisualTest test` passou. `mvn -q test`: 79 testes, 0 falhas, 0 erros e 0 ignorados. Captura headless revisada.
+- **Decisão / concorrência:** mudança restrita à apresentação Swing; callbacks continuam atualizando a interface pela EDT e a resposta continua privada no protocolo existente.
+- **Próximo passo:** conferir o cartão na janela Swing em uso; termômetro do clima continua como próxima funcionalidade, se solicitado.
