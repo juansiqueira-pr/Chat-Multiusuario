@@ -47,11 +47,11 @@ Sem Spring, Hibernate/JPA, Lombok, Docker, mensageria nem `java.nio` Selector. `
 model/               Usuario, Mensagem, MensagemInvalidaException, UsuarioInvalidoException
 persistence/         MensagemRepository (interface), PersistenciaException
 persistence/jdbc/    JdbcMensagemRepository, ConnectionFactory, InicializadorSchema   <- ÚNICO lugar com java.sql
-service/             ChatService, ClientRegistry, ConexaoCliente, ModeradorDeMensagens, exceções
+service/             ChatService, ClientRegistry, ConexaoCliente, ModeradorDeMensagens, ResumidorDeConversa, exceções
 server/              Servidor (tem o main), ClienteHandler, Protocolo                 <- ÚNICO lugar com Socket no servidor
 client/              ClienteChat (tem o main)
 config/              Config
-infraestrutura/ia/   ConfiguracaoIA, ClienteGroq, ModeradorGroq, ModeradorResiliente, FalhaInferenciaException
+infraestrutura/ia/   ConfiguracaoIA, ClienteGroq, ModeradorGroq, ModeradorResiliente, ResumidorGroq, FalhaInferenciaException
 src/main/resources/  schema.sql, chat.properties
 src/test/java/...    model/ service/ persistence/ integracao/ support/ (InMemoryMensagemRepository, FakeConexao, ModeradorFalso; ModeracaoChatManual sem JUnit)
 ```
@@ -84,7 +84,7 @@ Estado compartilhado: `ClientRegistry` (principal) e `ClienteHandler.enviar()` (
 - **Broadcast** percorre o snapshot e **nunca segura lock do registry durante o envio**.
 - **`ClienteHandler.enviar()` é `synchronized`** (várias threads escrevem no mesmo `PrintWriter`). Falha de escrita (`checkError`/`IOException`) lança `FalhaEnvioException`; o `ChatService` remove aquela conexão e **continua** o broadcast para as demais.
 - **Ordem**: o `ChatService` tem um lock privado (`ordemLock`) que faz de **salvar + broadcast** uma seção crítica única, e também de **registrar + enviar histórico** em `conectar()`. Assim a ordem do banco é a ordem que os clientes veem, e ninguém perde nem duplica mensagem ao entrar. Trade-off a documentar: perde paralelismo e um cliente lento atrasa os demais. Ordem de aquisição: `ordemLock` -> lock do registry, nunca o inverso.
-- **Moderação de IA**: a consulta externa acontece antes de adquirir `ordemLock`; uma resposta lenta não segura o lock de persistência/broadcast e não impede outros clientes de enviar mensagens. Após a classificação, mensagens permitidas entram no lock para salvar e transmitir em ordem. Em erro, o wrapper fail-open libera e registra aviso; o thread daquela conexão aguarda a resposta ou timeout HTTP (90 s), mas os outros clientes continuam processando mensagens.
+- **IA no chat**: moderação acontece antes de adquirir `ordemLock`; uma resposta lenta não segura o lock de persistência/broadcast. O comando `/historico` copia as mensagens sob o lock e chama o resumidor depois de liberá-lo; a resposta é enviada somente ao solicitante. Falhas de resumo são privadas e não derrubam o chat. A thread que solicitou ainda pode aguardar o timeout HTTP (90 s), mas as outras conexões continuam processando mensagens.
 - **JDBC**: uma `Connection` por operação, fechada com try-with-resources. Nunca compartilhe `Connection`.
 - Sem campo `static` mutável. Sem `Thread.sleep` para "sincronizar" (nem em testes: use `CountDownLatch` ou espera por condição com timeout). Threads com nome (`cliente-N`).
 - `desconectar()` é **idempotente** (só avisa a saída se de fato removeu). `ClienteHandler.run()` termina sempre em `finally { desconectar; fechar socket }`. Exceção de um cliente nunca escapa para o servidor.
@@ -94,7 +94,7 @@ Estado compartilhado: `ClientRegistry` (principal) e `ClienteHandler.enviar()` (
 
 - **UTF-8 explícito** nos dois lados (`InputStreamReader`/`OutputStreamWriter` com `StandardCharsets.UTF_8`; no cliente, também stdin e stdout).
 - A 1ª linha do cliente é o nickname. Se inválido ou em uso, o servidor responde `! motivo` e pede de novo (máx. 3 tentativas).
-- Linhas iniciadas por `/` são comandos. No núcleo existe só `/quit`; comando desconhecido gera `! comando desconhecido`.
+- Linhas iniciadas por `/` são comandos. `/quit` encerra a conexão; `/historico` e `/histórico` pedem resumo privado do histórico recente; comando desconhecido gera `! comando desconhecido`.
 - Saída do servidor: `[dd/MM HH:mm] nome: texto` (mensagem), `* texto` (sistema: entrou, saiu, histórico), `! texto` (erro, só para o remetente). Avisos de sistema não são persistidos. A mensagem de chat é entregue a **todos os conectados, inclusive o remetente**.
 - O parsing das linhas de entrada fica só em `Protocolo`. Os prefixos de saída (`* ` e `! `) são constantes em `service` (ex.: em `ChatService`), para o service não depender de `server`.
 
@@ -110,7 +110,7 @@ Estado compartilhado: `ClientRegistry` (principal) e `ClienteHandler.enviar()` (
 
 Mínimo exigido: 5 unitários (meta: 15 ou mais), sem rede real e sem banco real. Use `InMemoryMensagemRepository`, `FakeConexao` (guarda as linhas recebidas; opção de falhar ao enviar) e `Clock.fixed`.
 
-Na suíte: validação de `Usuario` e `Mensagem`; `formatar()`; `ChatService` salva e faz broadcast; removido não recebe; falha de uma conexão não impede as demais; histórico em ordem cronológica; nome duplicado recusado; **teste concorrente** (várias threads em `adicionar`/`remover`/`broadcast` com `ExecutorService` + `CountDownLatch`, sem exceção nem perda).
+Na suíte: validação de `Usuario` e `Mensagem`; `formatar()`; `ChatService` salva e faz broadcast; removido não recebe; falha de uma conexão não impede as demais; histórico em ordem cronológica; resumo privado e falha controlada; nome duplicado recusado; **teste concorrente** (várias threads em `adicionar`/`remover`/`broadcast` com `ExecutorService` + `CountDownLatch`, sem exceção nem perda).
 
 Testes de **integração** (H2 em memória; servidor real em porta `0`) ficam separados, com "Integracao" no nome e no pacote `integracao`; nunca os chame de unitários. Nunca enfraqueça, desative (`@Disabled`) ou apague um teste para ficar verde.
 

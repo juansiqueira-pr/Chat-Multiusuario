@@ -22,6 +22,7 @@ public final class ChatService {
     private final Clock relogio;
     private final int tamanhoHistorico;
     private final ModeradorDeMensagens moderador;
+    private final ResumidorDeConversa resumidor;
     private final Object ordemLock = new Object();
     private final Logger registrador = Logger.getLogger(ChatService.class.getName());
 
@@ -34,11 +35,20 @@ public final class ChatService {
     /** Cria o serviço com dependências do chat e um moderador de mensagens injetado. */
     public ChatService(MensagemRepository repositorio, ClientRegistry registro, Clock relogio,
                        int tamanhoHistorico, ModeradorDeMensagens moderador) {
+        this(repositorio, registro, relogio, tamanhoHistorico, moderador,
+                mensagens -> "Resumo indisponível.");
+    }
+
+    /** Cria o serviço com dependências de moderação e resumo injetadas. */
+    public ChatService(MensagemRepository repositorio, ClientRegistry registro, Clock relogio,
+                       int tamanhoHistorico, ModeradorDeMensagens moderador,
+                       ResumidorDeConversa resumidor) {
         this.repositorio = Objects.requireNonNull(repositorio);
         this.registro = Objects.requireNonNull(registro);
         this.relogio = Objects.requireNonNull(relogio);
         this.tamanhoHistorico = tamanhoHistorico;
         this.moderador = Objects.requireNonNull(moderador);
+        this.resumidor = Objects.requireNonNull(resumidor);
     }
 
     /** Registra a conexão, confirma o nick, envia o histórico e anuncia a entrada em ordem única. */
@@ -122,6 +132,15 @@ public final class ChatService {
         synchronized (ordemLock) {
             return buscarHistoricoSemLock();
         }
+    }
+
+    /** Resume o histórico configurado sem manter o lock de ordenação durante a chamada externa. */
+    public String resumirHistorico() {
+        List<Mensagem> mensagens = buscarHistorico();
+        if (mensagens.isEmpty()) {
+            return "Ainda não há mensagens para resumir.";
+        }
+        return resumidor.resumir(mensagens);
     }
 
     private List<Mensagem> buscarHistoricoSemLock() {

@@ -108,6 +108,22 @@ class ChatServiceTest {
     }
 
     @Test
+    void resumoRecebeHistoricoRecenteSemAlterarAsMensagens() throws Exception {
+        InMemoryMensagemRepository repositorio = new InMemoryMensagemRepository();
+        repositorio.salvar(mensagem("assunto do teste", 1));
+        ClientRegistry registro = new ClientRegistry();
+        ChatService servico = new ChatService(repositorio, registro, RELOGIO, 20,
+                new ModeradorFalso(false), mensagens -> {
+                    assertEquals(List.of("assunto do teste"), mensagens.stream()
+                            .map(Mensagem::getConteudo).toList());
+                    return "Resumo do assunto.";
+                });
+
+        assertEquals("Resumo do assunto.", servico.resumirHistorico());
+        assertEquals(1, servico.buscarHistorico().size());
+    }
+
+    @Test
     void moderacaoLentaNaoSeguraLockQueImpedeOutroBroadcast() throws Exception {
         ClientRegistry registro = new ClientRegistry();
         FakeConexao ana = conexao("ana");

@@ -89,9 +89,11 @@ Exemplo de sessão: Ana digita `Oi, pessoal!`; os clientes veem `[13/10 09:00] a
 ## 7. Comandos e formato
 
 - `/quit`: encerra a conexão atual.
+- `/historico` (ou `/histórico`): pede um resumo curto das últimas mensagens; a resposta aparece apenas para quem pediu. Requer `GROQ_API_KEY` no `.env`.
 - Mensagem: `[dd/MM HH:mm] nome: texto`.
 - Sistema: `* texto` (entrada/saída e avisos).
 - Erro: `! texto` (só para o remetente).
+- Se o serviço de resumo estiver indisponível, o solicitante recebe `! resumo indisponível neste momento`; o chat continua funcionando.
 
 ## 8. Histórico e banco
 
@@ -124,7 +126,8 @@ br.unicesumar.chat
 ├── persistence/  MensagemRepository e exceção: contrato sem SQL.
 │   └── jdbc/     ConnectionFactory, schema e implementação JDBC.
 ├── server/       Servidor, ClienteHandler e Protocolo.
-└── service/      ChatService, ClientRegistry e abstrações de conexão.
+├── service/      ChatService, ClientRegistry e contratos de conexão, moderação e resumo.
+└── infraestrutura/ia/ Cliente Groq e adaptadores de moderação e resumo.
 ```
 
 ## 11. Concorrência
@@ -134,6 +137,7 @@ br.unicesumar.chat
 - O broadcast percorre um snapshot e não mantém lock do registry durante a escrita.
 - `ClienteHandler.enviar()` é sincronizado para não misturar linhas no mesmo socket.
 - `ChatService.ordemLock` serializa salvar+broadcast e registrar+enviar histórico.
+- O resumo usa uma cópia das mensagens recentes; a consulta ao Groq acontece sem segurar `ordemLock` e sua resposta é privada.
 
 ## 12. Solução de problemas
 
@@ -147,7 +151,7 @@ br.unicesumar.chat
 1. Inicie o servidor e mostre a porta ativa.
 2. Conecte Ana, Bruno e Carlos em três terminais.
 3. Troque mensagens e mostre que chegam aos três.
-4. Conecte um quarto nick e mostre o histórico em ordem.
+4. Conecte um quarto nick e mostre o histórico em ordem; peça `/historico` e confira o resumo privado.
 5. Feche um cliente abruptamente e prove que os demais continuam conversando.
 6. Encerre os clientes com `/quit` e pare o servidor.
 

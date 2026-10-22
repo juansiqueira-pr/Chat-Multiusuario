@@ -30,6 +30,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
+import br.unicesumar.chat.service.ResumoIndisponivelException;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -45,7 +46,8 @@ class ServidorIntegracaoTest {
                 "jdbc:h2:mem:" + nomeBanco + ";DB_CLOSE_DELAY=-1", "sa", "");
         new InicializadorSchema(conexoes).inicializar();
         ChatService servico = new ChatService(new JdbcMensagemRepository(conexoes), new ClientRegistry(),
-                Clock.fixed(Instant.parse("2026-10-13T12:30:00Z"), ZoneOffset.UTC), 20);
+                Clock.fixed(Instant.parse("2026-10-13T12:30:00Z"), ZoneOffset.UTC), 20,
+                texto -> false, mensagens -> "Resumo: " + mensagens.getLast().getConteudo());
         servidor = new Servidor(0, servico);
         servidor.iniciar();
     }
@@ -130,6 +132,43 @@ class ServidorIntegracaoTest {
 
         assertFalse(linhasBruno.stream().anyMatch(linha -> linha.startsWith("! ")));
         assertTrue(ana.aguardar(linha -> linha.contains("ana: marcador-vazio")));
+    }
+
+    @Test
+    void resumoDoHistoricoVaiSomenteAoClienteQueSolicitou() throws Exception {
+        ClienteTeste ana = conectar("ana");
+        ClienteTeste bruno = conectar("bruno");
+        ana.enviar("mensagem para resumir");
+        assertTrue(ana.aguardar(linha -> linha.contains("ana: mensagem para resumir")));
+        assertTrue(bruno.aguardar(linha -> linha.contains("ana: mensagem para resumir")));
+
+        ana.enviar("/historico");
+        assertTrue(ana.aguardar(linha -> linha.equals("* Resumo: Resumo: mensagem para resumir")));
+        ana.enviar("marcador-de-privacidade");
+        List<String> linhasBruno = bruno.aguardarAte(linha -> linha.contains("marcador-de-privacidade"));
+
+        assertFalse(linhasBruno.stream().anyMatch(linha -> linha.contains("Resumo:")));
+    }
+
+    @Test
+    void falhaNoResumoMostraErroPrivadoEServidorContinua() throws Exception {
+        servidor.parar();
+        String nomeBanco = "tcp_falha_resumo_" + UUID.randomUUID().toString().replace("-", "");
+        ConnectionFactory conexoes = new ConnectionFactory(
+                "jdbc:h2:mem:" + nomeBanco + ";DB_CLOSE_DELAY=-1", "sa", "");
+        new InicializadorSchema(conexoes).inicializar();
+        ChatService servico = new ChatService(new JdbcMensagemRepository(conexoes), new ClientRegistry(),
+                Clock.fixed(Instant.parse("2026-10-13T12:30:00Z"), ZoneOffset.UTC), 20,
+                texto -> false, mensagens -> { throw new ResumoIndisponivelException("modelo indisponível", null); });
+        servidor = new Servidor(0, servico);
+        servidor.iniciar();
+        ClienteTeste ana = conectar("ana");
+        ana.enviar("mensagem existente");
+        assertTrue(ana.aguardar(linha -> linha.contains("mensagem existente")));
+        ana.enviar("/historico");
+        assertTrue(ana.aguardar(linha -> linha.equals("! resumo indisponível neste momento")));
+        ana.enviar("servidor-continua");
+        assertTrue(ana.aguardar(linha -> linha.contains("servidor-continua")));
     }
 
     private ClienteTeste conectar(String nick) throws Exception {

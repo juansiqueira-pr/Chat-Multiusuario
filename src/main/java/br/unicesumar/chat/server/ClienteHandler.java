@@ -7,6 +7,7 @@ import br.unicesumar.chat.service.ChatService;
 import br.unicesumar.chat.service.ConexaoCliente;
 import br.unicesumar.chat.service.FalhaEnvioException;
 import br.unicesumar.chat.service.NomeEmUsoException;
+import br.unicesumar.chat.service.ResumoIndisponivelException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -123,6 +124,14 @@ public final class ClienteHandler implements Runnable, ConexaoCliente {
             switch (resultado.tipo()) {
                 case SAIR -> {
                     return;
+                }
+                case RESUMIR_HISTORICO -> {
+                    try {
+                        enviar(ChatService.PREFIXO_SISTEMA + "Resumo: " + servico.resumirHistorico());
+                    } catch (ResumoIndisponivelException excecao) {
+                        registrador.warning("Resumo indisponível neste momento: " + excecao.getMessage());
+                        enviar(ChatService.PREFIXO_ERRO + "resumo indisponível neste momento");
+                    }
                 }
                 case COMANDO_DESCONHECIDO -> enviar(ChatService.PREFIXO_ERRO + "comando desconhecido");
                 case MENSAGEM -> {

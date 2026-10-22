@@ -55,6 +55,7 @@ sequenceDiagram
 | Ciclo do servidor | Estado `volatile`, transições sob `cicloLock` e coleção concorrente de handlers. |
 | Ordem do serviço | `ordemLock` protege salvar+broadcast e registrar+histórico; clientes lentos reduzem paralelismo. |
 | Saída de cada handler | `enviar()` sincronizado; uma linha completa por escrita. |
+| Resumo de histórico | Snapshot das últimas mensagens; consulta Groq fora de `ordemLock`; resposta somente ao solicitante. |
 | Handlers do servidor | Conjunto concorrente; `parar()` fecha servidor e sockets ativos. |
 | Conexão dos clientes console e Swing | `ConexaoChat` usa UTF-8, escrita sincronizada, cancelamento idempotente; leitura notifica o ouvinte em thread própria. |
 | Componentes Swing | Só a EDT altera telas; callbacks de rede usam `SwingUtilities.invokeLater`. |
@@ -66,6 +67,8 @@ sequenceDiagram
 Uma race de nick duplicado foi evitada tornando a inclusão atômica (`ClientRegistryTest`). Alterações no registry durante broadcast são seguras por snapshot e foram exercitadas com `ExecutorService` e `CountDownLatch` (`ChatServiceTest`). O lock de ordenação impede que uma mensagem fique entre o registro do novo cliente e o envio do histórico.
 
 O fechamento da GUI durante conexão/leitura também fecha o socket e os streams; o connect tem timeout de 5 s e verifica cancelamento (`ConexaoChatIntegracaoTest`). O cliente gráfico usa Swing/Java2D sem dependências adicionais, paleta azul-petróleo, ardósia, verde-sinal e coral, com alternância clara e capturas em `docs/img/`. Como o protocolo existente envia uma linha por mensagem, quebras feitas com Shift+Enter são convertidas em espaços ao enviar.
+
+O comando `/historico` (também `/histórico`) resume as mensagens recentes com Groq e responde em privado. `ServidorIntegracaoTest` comprova privacidade e continuidade do chat quando o modelo falha; o teste local de HTTP valida o formato de resposta.
 
 O H2 usa `./data/chat`; o schema é inicializado com `CREATE ... IF NOT EXISTS`. O histórico busca os últimos IDs em ordem decrescente e os inverte para a ordem cronológica. Os testes JDBC usam bancos em memória com nome aleatório.
 

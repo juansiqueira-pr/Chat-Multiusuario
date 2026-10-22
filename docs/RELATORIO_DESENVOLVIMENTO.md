@@ -241,4 +241,13 @@ Formato de cada entrada (copie e preencha; mantenha curto):
 - **Suíte:** `mvn -q test` terminou com código 0; 66 testes, 0 falhas e 0 erros (54 unitários/visuais/arquitetura + 12 integrações). O harness manual não faz parte da suíte automática.
 - **Arquivos:** `ModeracaoChatManual`, comando de execução no `README.md`, atualização de `docs/AGENTS.md`, `docs/ESTADO.md` e este relatório.
 - **Observação:** durante o fechamento dos sockets houve um aviso de falha de envio ao anunciar a saída, comportamento conhecido do desligamento de conexões ativas; não afetou os resultados verificados nem o encerramento do servidor.
-- **Próximo passo:** nenhuma outra funcionalidade de IA foi iniciada; aguardar solicitação para resumo, termômetro ou `/hacker`.
+- **Próximo passo:** implementar resumo, termômetro ou `/hacker` somente quando solicitado.
+
+### 2026-10-22 · Resumo privado do histórico
+
+- **Adicionado:** `/historico` e `/histórico` ao `Protocolo`; `ResumidorDeConversa` no serviço e `ResumidorGroq` na infraestrutura. O modelo configurado em `ia.modelo.resumo` recebe as mensagens recentes persistidas, com instrução de produzir resumo curto em português e usar apenas fatos da conversa.
+- **Integração:** `ChatService.resumirHistorico()` obtém o histórico limitado pela configuração e invoca o resumidor depois de liberar `ordemLock`. `ClienteHandler` envia `* Resumo: ...` somente ao cliente solicitante; resposta vazia/inválida, timeout ou falha HTTP vira `ResumoIndisponivelException`, aviso privado e log conciso.
+- **Concorrência e camadas:** o resumo parte de uma cópia consistente feita sob o lock e não retém o lock durante a requisição de rede. A interface do resumidor está em `service`; detalhes Groq permanecem em `infraestrutura/ia`. Outros clientes continuam podendo trocar mensagens enquanto o modelo responde.
+- **Testes:** red inicial em `ProtocoloTest` por ausência do novo tipo; testes cobrem parsing com/sem acento, histórico selecionado, resposta Groq e resposta malformada, privacidade por sockets reais e falha sem interromper o servidor. `mvn -q test`: 72 testes, 0 falhas, 0 erros, 0 ignorados.
+- **Arquivos:** `Protocolo`, `ClienteHandler`, `Servidor`, `ChatService`, `ResumidorDeConversa`, `ResumoIndisponivelException`, `ResumidorGroq`, novos/alterados testes, `README.md`, `docs/AGENTS.md`, `docs/ESTADO.md`, `docs/RELATORIO_FINAL.md` e este relatório.
+- **Limites / próximo passo:** não foi feita chamada manual à API nesta etapa; a cobertura do Groq usa endpoint HTTP local simulado. O comando requer `GROQ_API_KEY`; termômetro e `/hacker` continuam pendentes.

@@ -5,12 +5,15 @@ import br.unicesumar.chat.infraestrutura.ia.ClienteGroq;
 import br.unicesumar.chat.infraestrutura.ia.ConfiguracaoIA;
 import br.unicesumar.chat.infraestrutura.ia.ModeradorGroq;
 import br.unicesumar.chat.infraestrutura.ia.ModeradorResiliente;
+import br.unicesumar.chat.infraestrutura.ia.ResumidorGroq;
 import br.unicesumar.chat.persistence.jdbc.ConnectionFactory;
 import br.unicesumar.chat.persistence.jdbc.InicializadorSchema;
 import br.unicesumar.chat.persistence.jdbc.JdbcMensagemRepository;
 import br.unicesumar.chat.service.ChatService;
 import br.unicesumar.chat.service.ClientRegistry;
 import br.unicesumar.chat.service.ModeradorDeMensagens;
+import br.unicesumar.chat.service.ResumidorDeConversa;
+import br.unicesumar.chat.service.ResumoIndisponivelException;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -131,14 +134,20 @@ public final class Servidor {
         ClientRegistry registro = new ClientRegistry();
         Logger registrador = Logger.getLogger(Servidor.class.getName());
         ModeradorDeMensagens moderador = texto -> false;
+        ResumidorDeConversa resumidor = mensagens -> {
+            throw new ResumoIndisponivelException(
+                    "Resumo indisponível: configure GROQ_API_KEY no arquivo .env.", null);
+        };
         try {
             ConfiguracaoIA configuracaoIA = new ConfiguracaoIA();
-            moderador = new ModeradorResiliente(new ModeradorGroq(new ClienteGroq(), configuracaoIA));
+            ClienteGroq clienteGroq = new ClienteGroq();
+            moderador = new ModeradorResiliente(new ModeradorGroq(clienteGroq, configuracaoIA));
+            resumidor = new ResumidorGroq(clienteGroq, configuracaoIA);
         } catch (IllegalStateException excecao) {
             registrador.warning("Moderação indisponível por falta de configuração; mensagens serão liberadas.");
         }
         ChatService servico = new ChatService(repositorio, registro, java.time.Clock.systemDefaultZone(),
-                config.getHistoricoTamanho(), moderador);
+                config.getHistoricoTamanho(), moderador, resumidor);
         Servidor servidor = new Servidor(config.getPorta(), servico);
         servidor.iniciar();
         registrador.info("Servidor iniciado na porta " + servidor.getPortaLocal() + ".");

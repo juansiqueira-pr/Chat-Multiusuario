@@ -8,6 +8,7 @@ public final class Protocolo {
     public enum Tipo {
         MENSAGEM,
         SAIR,
+        RESUMIR_HISTORICO,
         COMANDO_DESCONHECIDO
     }
 
@@ -20,6 +21,9 @@ public final class Protocolo {
         Objects.requireNonNull(linha, "linha");
         if ("/quit".equals(linha)) {
             return new Resultado(Tipo.SAIR, linha);
+        }
+        if ("/historico".equalsIgnoreCase(linha) || "/histórico".equalsIgnoreCase(linha)) {
+            return new Resultado(Tipo.RESUMIR_HISTORICO, linha);
         }
         if (linha.startsWith("/")) {
             return new Resultado(Tipo.COMANDO_DESCONHECIDO, linha);

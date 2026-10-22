@@ -20,6 +20,14 @@ class ProtocoloTest {
     }
 
     @Test
+    void reconheceComandoHistoricoComOuSemAcento() {
+        assertEquals(new Protocolo.Resultado(Protocolo.Tipo.RESUMIR_HISTORICO, "/historico"),
+                protocolo.interpretar("/historico"));
+        assertEquals(new Protocolo.Resultado(Protocolo.Tipo.RESUMIR_HISTORICO, "/histórico"),
+                protocolo.interpretar("/histórico"));
+    }
+
+    @Test
     void classificaOutrosComandosComoDesconhecidos() {
         assertEquals(new Protocolo.Resultado(Protocolo.Tipo.COMANDO_DESCONHECIDO, "/privado ana oi"),
                 protocolo.interpretar("/privado ana oi"));
