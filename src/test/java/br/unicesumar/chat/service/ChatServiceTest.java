@@ -9,10 +9,12 @@ import br.unicesumar.chat.infraestrutura.ia.ModeradorResiliente;
 import br.unicesumar.chat.support.FakeConexao;
 import br.unicesumar.chat.support.InMemoryMensagemRepository;
 import br.unicesumar.chat.support.ModeradorFalso;
+import br.unicesumar.chat.support.ResumidorFalso;
 import org.junit.jupiter.api.Test;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
@@ -121,6 +123,38 @@ class ChatServiceTest {
 
         assertEquals("Resumo do assunto.", servico.resumirHistorico());
         assertEquals(1, servico.buscarHistorico().size());
+    }
+
+    @Test
+    void resumoRecebeAsUltimas50MensagensMesmoQuandoHistoricoDeEntradaEMenor() throws Exception {
+        InMemoryMensagemRepository repositorio = new InMemoryMensagemRepository();
+        LocalDateTime inicio = LocalDateTime.of(2026, 10, 13, 9, 0);
+        for (int indice = 0; indice < 65; indice++) {
+            repositorio.salvar(new Mensagem(null, usuario("ana"), "mensagem-" + indice,
+                    inicio.plusMinutes(indice)));
+        }
+        ResumidorFalso resumidor = new ResumidorFalso("Resumo configurado.");
+        ChatService servico = new ChatService(repositorio, new ClientRegistry(), RELOGIO, 20,
+                new ModeradorFalso(false), resumidor);
+
+        assertEquals("Resumo configurado.", servico.resumirHistorico());
+
+        List<Mensagem> resumidas = resumidor.mensagensRecebidas();
+        assertEquals(1, resumidor.chamadas());
+        assertEquals(50, resumidas.size());
+        assertEquals("mensagem-15", resumidas.getFirst().getConteudo());
+        assertEquals("mensagem-64", resumidas.getLast().getConteudo());
+    }
+
+    @Test
+    void historicoVazioRetornaMensagemPadraoSemChamarResumidor() {
+        ResumidorFalso resumidor = new ResumidorFalso("não deve ser usada");
+        ChatService servico = new ChatService(new InMemoryMensagemRepository(), new ClientRegistry(),
+                RELOGIO, 20, new ModeradorFalso(false), resumidor);
+
+        assertEquals("Ainda não há histórico nesta conversa.", servico.resumirHistorico());
+        assertEquals(0, resumidor.chamadas());
+        assertTrue(resumidor.mensagensRecebidas().isEmpty());
     }
 
     @Test

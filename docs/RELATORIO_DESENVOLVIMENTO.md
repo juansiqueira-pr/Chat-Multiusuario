@@ -269,3 +269,13 @@ Formato de cada entrada (copie e preencha; mantenha curto):
 - **Testes:** o teste visual falhou antes da alteração porque não havia área de texto para a resposta; após a alteração, `mvn -q -Dtest=ListaMensagensVisualTest test` passou. `mvn -q test`: 79 testes, 0 falhas, 0 erros e 0 ignorados. Captura headless revisada.
 - **Decisão / concorrência:** mudança restrita à apresentação Swing; callbacks continuam atualizando a interface pela EDT e a resposta continua privada no protocolo existente.
 - **Próximo passo:** conferir o cartão na janela Swing em uso; termômetro do clima continua como próxima funcionalidade, se solicitado.
+
+### 2026-10-22 · Fase de revisão — Resumo privado `/histórico`
+
+- **Alterado:** o serviço agora busca as 50 mensagens mais recentes independentemente do limite de histórico enviado a novos clientes, copia a lista sob `ordemLock` e consulta o modelo depois de liberar o lock. Histórico vazio retorna “Ainda não há histórico nesta conversa.” sem consultar a IA. Prompt pede poucas frases em português, contexto geral e assuntos principais, sem atribuir falas.
+- **Adicionado:** `ResumidorFalso`, configurável e sem rede; testes para seleção cronológica das 50 últimas mensagens, resposta padrão sem chamada ao resumidor e conteúdo do prompt. Testes TCP existentes continuam cobrindo privacidade do resultado e falha controlada sem desconectar.
+- **Teste primeiro:** o novo teste de limite falhou com 20 mensagens recebidas em vez de 50; o teste de prompt falhou com a instrução anterior. Ambos passaram depois das alterações.
+- **Arquivos:** `ChatService`, `ResumidorGroq`, `ChatServiceTest`, `ResumidorGroqTest`, `src/test/java/br/unicesumar/chat/support/ResumidorFalso.java`, `docs/ESTADO.md` e este relatório.
+- **Testes:** `mvn -q test`: 82 testes, 0 falhas, 0 erros e 0 ignorados (65 unitários/visuais/arquitetura + 17 integrações).
+- **Decisão / concorrência:** a consulta JDBC que cria a cópia do histórico ocorre sob `ordemLock`; a chamada HTTP permanece fora do lock para não atrasar mensagens de outras conexões. Nenhuma outra funcionalidade foi alterada.
+- **Próximo passo:** termômetro do clima segue pendente; só implementar quando solicitado.

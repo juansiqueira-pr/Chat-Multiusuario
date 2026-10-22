@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 public final class ChatService {
     public static final String PREFIXO_SISTEMA = "* ";
     public static final String PREFIXO_ERRO = "! ";
+    private static final int LIMITE_MENSAGENS_RESUMO = 50;
 
     private final MensagemRepository repositorio;
     private final ClientRegistry registro;
@@ -144,11 +145,14 @@ public final class ChatService {
         }
     }
 
-    /** Resume o histórico configurado sem manter o lock de ordenação durante a chamada externa. */
+    /** Resume as últimas mensagens sem manter o lock de ordenação durante a chamada externa. */
     public String resumirHistorico() {
-        List<Mensagem> mensagens = buscarHistorico();
+        List<Mensagem> mensagens;
+        synchronized (ordemLock) {
+            mensagens = repositorio.buscarUltimas(LIMITE_MENSAGENS_RESUMO);
+        }
         if (mensagens.isEmpty()) {
-            return "Ainda não há mensagens para resumir.";
+            return "Ainda não há histórico nesta conversa.";
         }
         return resumidor.resumir(mensagens);
     }

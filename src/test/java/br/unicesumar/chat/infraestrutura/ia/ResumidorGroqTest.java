@@ -12,9 +12,11 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ResumidorGroqTest {
     @Test
@@ -39,23 +41,44 @@ class ResumidorGroqTest {
         }
     }
 
+    @Test
+    void instruiModeloAResumirContextoGeralSemAtribuirFalas() throws Exception {
+        AtomicReference<String> corpoRecebido = new AtomicReference<>();
+        HttpServer servidor = criarServidor("A conversa tratou do trabalho.", corpoRecebido);
+        try {
+            resumidor(servidor).resumir(mensagens());
+
+            assertTrue(corpoRecebido.get().contains("contexto geral da conversa"));
+            assertTrue(corpoRecebido.get().contains("sem atribuir falas"));
+            assertTrue(corpoRecebido.get().contains("Destaque os assuntos principais"));
+        } finally {
+            servidor.stop(0);
+        }
+    }
+
     private static List<Mensagem> mensagens() throws Exception {
         return List.of(new Mensagem(1L, new Usuario("ana"), "boa noite",
                 LocalDateTime.of(2026, 10, 22, 20, 0)));
     }
 
     private static HttpServer criarServidor(String resumo) throws IOException {
+        return criarServidor(resumo, new AtomicReference<>());
+    }
+
+    private static HttpServer criarServidor(String resumo, AtomicReference<String> corpoRecebido)
+            throws IOException {
         HttpServer servidor = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         String content = resumo.isEmpty() ? "" : "\"" + resumo + "\"";
         String resposta = "{\"choices\":[{\"message\":{" + (resumo.isEmpty() ? "" : "\"content\":" + content) + "}}]}";
-        servidor.createContext("/", requisicao -> responder(requisicao, resposta));
+        servidor.createContext("/", requisicao -> responder(requisicao, resposta, corpoRecebido));
         servidor.start();
         return servidor;
     }
 
-    private static void responder(HttpExchange requisicao, String resposta) throws IOException {
+    private static void responder(HttpExchange requisicao, String resposta,
+                                  AtomicReference<String> corpoRecebido) throws IOException {
         try (var entrada = requisicao.getRequestBody()) {
-            entrada.readAllBytes();
+            corpoRecebido.set(new String(entrada.readAllBytes(), StandardCharsets.UTF_8));
         }
         byte[] bytes = resposta.getBytes(StandardCharsets.UTF_8);
         requisicao.sendResponseHeaders(200, bytes.length);
