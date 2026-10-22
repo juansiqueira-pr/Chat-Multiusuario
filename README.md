@@ -44,6 +44,13 @@ mvn -q exec:java "-Dexec.mainClass=br.unicesumar.chat.infraestrutura.ia.Conectiv
 
 A chave pode ser criada no painel do Groq. O modelo de moderação tem limite baixo (3 requisições por minuto na tabela pública); ao receber HTTP 429, o cliente devolve a falha e não repete nem espera automaticamente. O teste informa o resultado de cada uso; ele não troca modelos.
 
+Para validar a moderação dentro do chat, rode o teste manual com servidor TCP local, dois clientes e banco H2 em memória. Ele envia uma mensagem segura e uma ofensiva ao Groq; exige `GROQ_API_KEY` válida e faz duas chamadas ao Safeguard:
+
+```powershell
+mvn -q test-compile
+mvn -q exec:java "-Dexec.mainClass=br.unicesumar.chat.integracao.ModeracaoChatManual" "-Dexec.classpathScope=test"
+```
+
 ## 4. Compilar e testar
 
 Na raiz do projeto:

@@ -53,7 +53,7 @@ client/              ClienteChat (tem o main)
 config/              Config
 infraestrutura/ia/   ConfiguracaoIA, ClienteGroq, ModeradorGroq, ModeradorResiliente, FalhaInferenciaException
 src/main/resources/  schema.sql, chat.properties
-src/test/java/...    model/ service/ persistence/ integracao/ support/ (InMemoryMensagemRepository, FakeConexao, ModeradorFalso)
+src/test/java/...    model/ service/ persistence/ integracao/ support/ (InMemoryMensagemRepository, FakeConexao, ModeradorFalso; ModeracaoChatManual sem JUnit)
 ```
 
 Nova classe ou pacote só se houver uma responsabilidade nova de verdade.

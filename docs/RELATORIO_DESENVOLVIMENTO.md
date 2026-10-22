@@ -233,3 +233,12 @@ Formato de cada entrada (copie e preencha; mantenha curto):
 - **Testes:** `ChatServiceTest` cobre mensagem normal, bloqueio sem broadcast/persistência, falha 429 com liberação e broadcast concorrente; `ModeradorGroqTest` cobre respostas permitidas e formato inválido. `mvn -q test`: 66 testes, 0 falhas e 0 erros (54 unitários/visuais/arquitetura + 12 integrações).
 - **Arquivos:** `ModeradorDeMensagens`, `ModeradorGroq`, `ModeradorResiliente`, `ModeradorFalso`, `ChatService`, montagem em `Servidor`, testes de serviço/IA, `docs/AGENTS.md`, `docs/ESTADO.md` e este relatório.
 - **Limites:** somente a moderação foi conectada ao servidor. Resumo, termômetro e `/hacker` seguem sem implementação; a chamada de moderação é síncrona na thread da conexão que enviou, embora não bloqueie o lock nem as outras conexões.
+
+### 2026-10-22 · Validação ponta a ponta da moderação
+
+- **Adicionado:** `ModeracaoChatManual`, um roteiro executável manual sem `@Test`. Inicia servidor real em porta dinâmica, conecta dois sockets UTF-8 e usa H2 em memória com a configuração Groq existente.
+- **Resultado:** mensagem segura (“Boa noite! Obrigado pela ajuda de hoje.”) chegou aos dois clientes. A mensagem de insulto/ameaça foi bloqueada; Ana recebeu o aviso privado; Bruno não recebeu linha; o texto ofensivo não apareceu no histórico persistido. Duas requisições foram feitas ao Safeguard.
+- **Suíte:** `mvn -q test` terminou com código 0; 66 testes, 0 falhas e 0 erros (54 unitários/visuais/arquitetura + 12 integrações). O harness manual não faz parte da suíte automática.
+- **Arquivos:** `ModeracaoChatManual`, comando de execução no `README.md`, atualização de `docs/AGENTS.md`, `docs/ESTADO.md` e este relatório.
+- **Observação:** durante o fechamento dos sockets houve um aviso de falha de envio ao anunciar a saída, comportamento conhecido do desligamento de conexões ativas; não afetou os resultados verificados nem o encerramento do servidor.
+- **Próximo passo:** nenhuma outra funcionalidade de IA foi iniciada; aguardar solicitação para resumo, termômetro ou `/hacker`.

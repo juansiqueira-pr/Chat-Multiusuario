@@ -2,10 +2,10 @@
 
 > Mapa compacto para o agente **não precisar varrer o repositório**. **Sobrescreva** a cada tarefa (não acumule histórico aqui; o histórico vai em `RELATORIO_DESENVOLVIMENTO.md`). Mantenha em até ~100 linhas.
 
-**Atualizado em:** 2026-10-21 · **Fase atual:** moderação fail-open via Groq implementada
+**Atualizado em:** 2026-10-22 · **Fase atual:** moderação Groq validada no chat TCP real
 **Marco "núcleo obrigatório completo":** ✅ atingido
 **Testes:** `mvn -q test` passou; 66 testes atuais, 0 falhas e 0 erros (54 unitários/visuais/arquitetura + 12 integrações). Inclui moderação estrita, bloqueio, fail-open e progresso de outro broadcast enquanto a análise aguarda.
-**Próximo passo:** testar a moderação pelo chat em execução; não implementar resumo, termômetro ou `/hacker` nesta etapa.
+**Próximo passo:** aguardar solicitação para implementar outra funcionalidade de IA; resumo, termômetro e `/hacker` continuam fora do escopo concluído.
 
 Legenda: ⬜ pendente · 🟡 em andamento · ✅ pronto e testado
 
@@ -73,6 +73,7 @@ Entregáveis: código ✅ · `schema.sql` ✅ · README ✅ · relatório final 
 | infraestrutura/ia/ModeradorGroq, ModeradorResiliente | Safeguard estrito e liberação com aviso em falha | ✅ |
 | test/support/ModeradorFalso | Classificação configurável sem rede | ✅ |
 | test/ia/ConectividadeManualGroq | Moderação e os outros três modelos responderam no teste manual | ✅ |
+| test/integracao/ModeracaoChatManual | Dois sockets: mensagem segura chega aos dois; ofensiva só gera aviso ao remetente e não persiste | ✅ |
 | config/Config | Lê `chat.properties` com valores padrão | ✅ |
 | resources/schema.sql, chat.properties | Script da tabela; configuração | ✅ |
 | test/support/InMemoryMensagemRepository, FakeConexao | Dublês de teste | ✅ |
