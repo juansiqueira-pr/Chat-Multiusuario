@@ -51,6 +51,29 @@ class ListaMensagensVisualTest {
                 "a resposta deve ocupar o estado vazio da conversa");
     }
 
+    @Test
+    void resumoDoHistoricoTemCartaoProprioComTextoSelecionavelEQuebrado() throws Exception {
+        String resumo = "A conversa apresentou os principais pontos do projeto, incluindo "
+                + "persistência, organização das tarefas e próximos passos para a equipe.";
+        AtomicReference<JTextArea> corpo = new AtomicReference<>();
+        AtomicReference<JLabel> vazio = new AtomicReference<>();
+        SwingUtilities.invokeAndWait(() -> {
+            ListaMensagens lista = new ListaMensagens("ana", new Animacao());
+            lista.adicionar(br.unicesumar.chat.client.LinhaServidor.interpretar("* Resumo: " + resumo));
+            localizarTextoIniciandoCom(lista, resumo, corpo);
+            localizarRotulo(lista, "Diga olá", vazio);
+        });
+
+        assertNotNull(corpo.get(), "o resumo deve aparecer em um cartão de texto longo");
+        assertEquals(resumo, corpo.get().getText());
+        assertEquals("Resumo da conversa", corpo.get().getAccessibleContext().getAccessibleName());
+        assertTrue(corpo.get().getLineWrap());
+        assertTrue(corpo.get().getWrapStyleWord());
+        assertFalse(corpo.get().isEditable());
+        org.junit.jupiter.api.Assertions.assertNull(vazio.get(),
+                "o resumo deve substituir o estado vazio da conversa");
+    }
+
     private void localizarBarra(Component componente, AtomicReference<JScrollBar> barra) {
         if (componente instanceof JScrollPane painel) barra.set(painel.getVerticalScrollBar());
         if (componente instanceof Container recipiente) {
@@ -64,6 +87,14 @@ class ListaMensagensVisualTest {
         }
         if (componente instanceof Container recipiente) {
             for (Component filho : recipiente.getComponents()) localizarTexto(filho, texto);
+        }
+    }
+
+    private void localizarTextoIniciandoCom(Component componente, String inicio,
+                                             AtomicReference<JTextArea> texto) {
+        if (componente instanceof JTextArea area && area.getText().startsWith(inicio)) texto.set(area);
+        if (componente instanceof Container recipiente) {
+            for (Component filho : recipiente.getComponents()) localizarTextoIniciandoCom(filho, inicio, texto);
         }
     }
 

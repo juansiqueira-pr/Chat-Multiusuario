@@ -4,7 +4,7 @@
 
 **Atualizado em:** 2026-10-22 · **Fase atual:** resumo privado `/historico`
 **Marco "núcleo obrigatório completo":** ✅ atingido
-**Testes:** `mvn -q test` passou: 82 testes, 0 falhas, 0 erros, 0 ignorados (65 unitários/visuais/arquitetura + 17 integrações).
+**Testes:** `mvn -q test` passou: 83 testes, 0 falhas, 0 erros, 0 ignorados (66 unitários/visuais/arquitetura + 17 integrações).
 **Próximo passo:** implementar termômetro do clima quando solicitado.
 
 ## Requisitos obrigatórios
@@ -44,6 +44,7 @@ Vídeo com 3+ clientes: ⬜ responsabilidade do aluno. Marco de núcleo completo
 - Resumo: `ResumidorDeConversa`, `ResumidorGroq`; `/historico` e `/histórico` resumem até 50 mensagens recentes e respondem apenas ao solicitante. Histórico vazio responde sem chamar a IA; falhas geram aviso privado.
 - Assistente técnico: `AssistenteTecnico`, `AssistenteTecnicoGroq`; `/hacker <pergunta>` consulta o modelo configurado para orientação educativa/defensiva e responde apenas ao solicitante.
 - Interface `/hacker`: `ListaMensagens` apresenta a resposta em cartão próprio com largura adaptável, quebra automática, texto selecionável e cores para os temas claro/escuro (`ListaMensagensVisualTest`).
+- Interface `/historico`: `ListaMensagens` apresenta o resumo em cartão próprio com título, largura adaptável, quebra automática e texto selecionável; também substitui o estado vazio da conversa (`ListaMensagensVisualTest`).
 - Configuração de IA: `ConfiguracaoIA` lê `GROQ_API_KEY`; `ClienteGroq` centraliza HTTP e tratamento de rede, timeout e erros da API.
 - Falhas de resumo/assistente: exceções específicas geram aviso privado; outras conexões continuam ativas.
 - Testes da etapa: `ChatServiceTest`, `ResumidorGroqTest`, `ProtocoloTest` e `ServidorIntegracaoTest` cobrem limite de 50 mensagens, prompt geral, histórico vazio, aliases do comando, privacidade e falha controlada. `ResumidorFalso` evita rede nos testes de serviço.

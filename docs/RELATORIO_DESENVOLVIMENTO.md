@@ -279,3 +279,20 @@ Formato de cada entrada (copie e preencha; mantenha curto):
 - **Testes:** `mvn -q test`: 82 testes, 0 falhas, 0 erros e 0 ignorados (65 unitários/visuais/arquitetura + 17 integrações).
 - **Decisão / concorrência:** a consulta JDBC que cria a cópia do histórico ocorre sob `ordemLock`; a chamada HTTP permanece fora do lock para não atrasar mensagens de outras conexões. Nenhuma outra funcionalidade foi alterada.
 - **Próximo passo:** termômetro do clima segue pendente; só implementar quando solicitado.
+
+### 2026-10-22 · Usabilidade visual do resumo `/historico`
+
+- **Causa:** `* Resumo: ...` era tratado como aviso genérico de sistema e desenhado em um `JLabel`, que não quebra linhas; por isso resumos longos ficavam ilegíveis.
+- **Alterado:** `ListaMensagens` encaminha respostas de resumo ao cartão visual com título “Resumo da conversa”, texto selecionável, quebra por palavras, largura adaptável e cores consistentes com os temas. O cartão também remove o estado vazio. `RespostaAssistente` agora permite definir título e nome acessível sem mudar o cartão do `/hacker`.
+- **Teste primeiro:** `ListaMensagensVisualTest.resumoDoHistoricoTemCartaoProprioComTextoSelecionavelEQuebrado` falhou inicialmente porque o resumo não era uma área de texto. Passou após a correção; valida corpo, acessibilidade, quebra automática, seleção somente leitura e remoção do estado vazio.
+- **Captura:** `docs/img/tela-chat.png` foi regenerada em modo headless e revisada; mostra o resumo em cartão com várias linhas.
+- **Arquivos:** `ListaMensagens`, `RespostaAssistente`, `ListaMensagensVisualTest`, `CapturarTelas`, `docs/img/tela-chat.png`, `docs/ESTADO.md` e este relatório.
+- **Testes:** teste visual direcionado passou; suíte completa pendente nesta execução.
+- **Escopo:** apresentação Swing apenas; protocolo, serviço e demais comandos não foram alterados.
+- **Próximo passo:** validar a suíte completa e confirmar o resultado no cliente GUI em execução.
+
+### 2026-10-22 · Verificação do cartão `/historico`
+
+- **Resultado:** `mvn -q test` passou com 83 testes, 0 falhas, 0 erros e 0 ignorados (66 unitários/visuais/arquitetura + 17 integrações). O comando exibiu avisos de envio em sockets fechados e de falhas simuladas nos testes; a suíte terminou com código 0.
+- **Revisão visual:** captura headless atualizada e revisada. O resumo longo aparece em cartão com quebra em três linhas, cabeçalho e contraste compatível com a identidade atual.
+- **Próximo passo:** reiniciar a interface Swing para carregar a versão atualizada e experimentar `/historico`.

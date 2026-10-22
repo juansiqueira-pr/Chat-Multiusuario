@@ -46,6 +46,10 @@ public final class CapturarTelas {
                 chat.adicionar(LinhaServidor.interpretar("* Assistente técnico: "
                         + "Use consultas preparadas com parâmetros para separar os dados do comando SQL. "
                         + "Assim, o conteúdo recebido não é executado como parte da consulta."));
+                chat.adicionar(LinhaServidor.interpretar("* Resumo: "
+                        + "A conversa destacou a organização do projeto, a persistência das mensagens e "
+                        + "a importância de manter cada etapa validada por testes. A equipe combinou "
+                        + "revisar os próximos passos e compartilhar o material antes da próxima reunião."));
                 salvar(chat, 1000, 680, destino.resolve("tela-chat.png"));
             } catch (Throwable excecao) {
                 falha.set(excecao);

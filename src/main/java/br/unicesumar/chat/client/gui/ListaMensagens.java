@@ -23,6 +23,7 @@ import java.util.Deque;
 /** Apresenta até 500 itens, respeita rolagem manual e anima a chegada/rolagem. */
 public final class ListaMensagens extends JPanel {
     private static final String PREFIXO_ASSISTENTE = "Assistente técnico: ";
+    private static final String PREFIXO_RESUMO = "Resumo: ";
     private final ModeloConversa modelo;
     private final Animacao animacao;
     private final JPanel itens = new JPanel();
@@ -110,7 +111,9 @@ public final class ListaMensagens extends JPanel {
         ModeloConversa.Item item = modelo.itens().getLast();
         boolean respostaAssistente = item.linha().tipo() == LinhaServidor.Tipo.SISTEMA
                 && item.linha().texto().startsWith(PREFIXO_ASSISTENTE);
-        if ((item.linha().tipo() == LinhaServidor.Tipo.MENSAGEM || respostaAssistente)
+        boolean respostaResumo = item.linha().tipo() == LinhaServidor.Tipo.SISTEMA
+                && item.linha().texto().startsWith(PREFIXO_RESUMO);
+        if ((item.linha().tipo() == LinhaServidor.Tipo.MENSAGEM || respostaAssistente || respostaResumo)
                 && vazio.getParent() == itens) itens.remove(vazio);
         JPanel componente = criarLinha(item);
         componentes.addLast(componente);
@@ -176,6 +179,13 @@ public final class ListaMensagens extends JPanel {
             resposta.setTemaClaro(temaClaro);
             linhaPainel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 5));
             linhaPainel.add(resposta);
+        } else if (linha.tipo() == LinhaServidor.Tipo.SISTEMA
+                && linha.texto().startsWith(PREFIXO_RESUMO)) {
+            RespostaAssistente resumo = new RespostaAssistente("Resumo da conversa", "Resumo da conversa",
+                    linha.texto().substring(PREFIXO_RESUMO.length()));
+            resumo.setTemaClaro(temaClaro);
+            linhaPainel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 5));
+            linhaPainel.add(resumo);
         } else {
             JLabel pílula = new JLabel(linha.texto());
             pílula.setFont(Tema.fonte(11, Font.PLAIN));

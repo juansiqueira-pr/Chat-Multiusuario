@@ -12,13 +12,18 @@ import java.awt.Insets;
 
 /** Apresenta a resposta do assistente em um cartão com texto legível e copiável. */
 final class RespostaAssistente extends JPanel {
-    private final JLabel titulo = new JLabel("Assistente técnico");
+    private final JLabel titulo;
     private final JTextArea corpo;
     private boolean temaClaro;
     private int larguraMaxima = 620;
 
     RespostaAssistente(String resposta) {
+        this("Assistente técnico", "Resposta do assistente técnico", resposta);
+    }
+
+    RespostaAssistente(String textoTitulo, String nomeAcessivel, String resposta) {
         super(new BorderLayout(0, 7));
+        titulo = new JLabel(textoTitulo);
         setOpaque(false);
         setBorder(BorderFactory.createEmptyBorder(12, 15, 13, 15));
         titulo.setFont(Tema.fonte(11, Font.BOLD));
@@ -32,9 +37,9 @@ final class RespostaAssistente extends JPanel {
         corpo.setFocusable(true);
         corpo.setOpaque(false);
         corpo.setMargin(new Insets(0, 0, 0, 0));
-        corpo.getAccessibleContext().setAccessibleName("Resposta do assistente técnico");
+        corpo.getAccessibleContext().setAccessibleName(nomeAcessivel);
         add(corpo, BorderLayout.CENTER);
-        getAccessibleContext().setAccessibleName("Resposta do assistente técnico");
+        getAccessibleContext().setAccessibleName(nomeAcessivel);
         setToolTipText("Selecione o texto para copiá-lo");
         setLarguraMaxima(larguraMaxima);
         setTemaClaro(false);
