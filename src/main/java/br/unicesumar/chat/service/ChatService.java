@@ -21,16 +21,24 @@ public final class ChatService {
     private final ClientRegistry registro;
     private final Clock relogio;
     private final int tamanhoHistorico;
+    private final ModeradorDeMensagens moderador;
     private final Object ordemLock = new Object();
     private final Logger registrador = Logger.getLogger(ChatService.class.getName());
 
     /** Cria o serviço com repositório, registry, relógio e limite de histórico. */
     public ChatService(MensagemRepository repositorio, ClientRegistry registro, Clock relogio,
                        int tamanhoHistorico) {
+        this(repositorio, registro, relogio, tamanhoHistorico, texto -> false);
+    }
+
+    /** Cria o serviço com dependências do chat e um moderador de mensagens injetado. */
+    public ChatService(MensagemRepository repositorio, ClientRegistry registro, Clock relogio,
+                       int tamanhoHistorico, ModeradorDeMensagens moderador) {
         this.repositorio = Objects.requireNonNull(repositorio);
         this.registro = Objects.requireNonNull(registro);
         this.relogio = Objects.requireNonNull(relogio);
         this.tamanhoHistorico = tamanhoHistorico;
+        this.moderador = Objects.requireNonNull(moderador);
     }
 
     /** Registra a conexão, confirma o nick, envia o histórico e anuncia a entrada em ordem única. */
@@ -62,13 +70,35 @@ public final class ChatService {
         }
     }
 
-    /** Valida, persiste e distribui uma mensagem sob o mesmo lock de ordenação. */
+    /** Modera sem segurar o lock; depois persiste e distribui na ordem única do chat. */
     public Mensagem enviarMensagem(Usuario remetente, String conteudo) throws MensagemInvalidaException {
+        Mensagem mensagem = new Mensagem(null, remetente, conteudo, LocalDateTime.now(relogio));
+        if (moderador.ehOfensiva(mensagem.getConteudo())) {
+            synchronized (ordemLock) {
+                avisarRemetente(remetente,
+                        PREFIXO_ERRO + "sua mensagem foi bloqueada por conter conteúdo ofensivo");
+            }
+            return null;
+        }
         synchronized (ordemLock) {
-            Mensagem mensagem = new Mensagem(null, remetente, conteudo, LocalDateTime.now(relogio));
             Mensagem salva = repositorio.salvar(mensagem);
             broadcast(salva.formatar());
             return salva;
+        }
+    }
+
+    private void avisarRemetente(Usuario remetente, String aviso) {
+        for (ConexaoCliente cliente : registro.snapshot()) {
+            if (cliente.getUsuario().equals(remetente)) {
+                try {
+                    cliente.enviar(aviso);
+                } catch (FalhaEnvioException excecao) {
+                    registro.remover(cliente);
+                    registrador.log(Level.WARNING,
+                            "Remetente removido após falha ao receber aviso de moderação.", excecao);
+                }
+                return;
+            }
         }
     }
 

@@ -3,6 +3,7 @@
 Projeto acadêmico de POO em Java para a UniCesumar/UNIPA Curitiba.
 Um servidor TCP atende vários clientes em paralelo, com uma thread por conexão.
 As mensagens são persistidas com JDBC/H2, transmitidas a todos e entregues no histórico ao entrar.
+Antes do broadcast, a moderação Groq bloqueia mensagens classificadas como ofensivas; se a IA estiver indisponível, a mensagem é liberada e o servidor registra um aviso.
 
 ## 1. Requisitos
 

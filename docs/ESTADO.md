@@ -2,10 +2,10 @@
 
 > Mapa compacto para o agente **não precisar varrer o repositório**. **Sobrescreva** a cada tarefa (não acumule histórico aqui; o histórico vai em `RELATORIO_DESENVOLVIMENTO.md`). Mantenha em até ~100 linhas.
 
-**Atualizado em:** 2026-10-21 · **Fase atual:** base Groq configurada; conectividade manual pendente
+**Atualizado em:** 2026-10-21 · **Fase atual:** moderação fail-open via Groq implementada
 **Marco "núcleo obrigatório completo":** ✅ atingido
-**Testes:** última execução anterior: 47 unitários/arquitetura + 12 integrações = 59 verdes. Para esta tarefa, Maven ainda não executou: o ambiente bloqueou locks no `.m2` e a rede ao tentar repositório local alternativo.
-**Próximo passo:** corrigir a permissão organizacional informada pelo Groq para `openai/gpt-oss-safeguard-20b` e repetir só a chamada de moderação. Nenhuma funcionalidade de IA está conectada ao chat.
+**Testes:** `mvn -q test` passou; 66 testes atuais, 0 falhas e 0 erros (54 unitários/visuais/arquitetura + 12 integrações). Inclui moderação estrita, bloqueio, fail-open e progresso de outro broadcast enquanto a análise aguarda.
+**Próximo passo:** testar a moderação pelo chat em execução; não implementar resumo, termômetro ou `/hacker` nesta etapa.
 
 Legenda: ⬜ pendente · 🟡 em andamento · ✅ pronto e testado
 
@@ -23,7 +23,7 @@ Legenda: ⬜ pendente · 🟡 em andamento · ✅ pronto e testado
 | 8 | Repository isola o SQL | `MensagemRepository`; `ArquiteturaTest` | ✅ |
 | 9 | Histórico ao conectar | `ChatService.conectar`; unitário e integração TCP | ✅ |
 | 10 | Desconexão segura | `ClienteHandler.finally`; cenário abrupto TCP | ✅ |
-| 11 | ≥ 5 testes JUnit sem rede real | 31 testes unitários/arquitetura | ✅ |
+| 11 | ≥ 5 testes JUnit sem rede real | testes unitários/visuais/arquitetura; sem rede externa automática | ✅ |
 | 12 | Código organizado em pacotes | pacotes `br.unicesumar.chat`; `ArquiteturaTest` | ✅ |
 
 Entregáveis: código ✅ · `schema.sql` ✅ · README ✅ · relatório final ✅ · vídeo ⬜ (feito pelo aluno)
@@ -36,7 +36,7 @@ Entregáveis: código ✅ · `schema.sql` ✅ · README ✅ · relatório final 
 | Broadcast ordenado e seguro | 1,2 | `ChatServiceTest`, teste concorrente e integração de 3 clientes |
 | Persistência JDBC | 1,0 | `JdbcMensagemRepositoryIntegracaoTest` |
 | Pacotes e responsabilidades | 0,5 | `ArquiteturaTest` |
-| Testes unitários de lógica | 0,5 | 31 unitários/arquitetura; sem rede real |
+| Testes unitários de lógica | 0,5 | 54 unitários/visuais/arquitetura; sem rede externa automática |
 | Organização e relatório | 0,5 | README, estado e relatório final |
 
 ## Mapa de classes (`src/main/java/br/unicesumar/chat/...`)
@@ -55,6 +55,7 @@ Entregáveis: código ✅ · `schema.sql` ✅ · README ✅ · relatório final 
 | service/FalhaEnvioException, NomeEmUsoException | Falha de envio (runtime) / nome em uso (checked) | ✅ |
 | service/ClientRegistry | Coleção compartilhada e thread-safe de conexões | ✅ |
 | service/ChatService | Regras do chat: conectar, desconectar, enviar, broadcast, histórico | ✅ |
+| service/ModeradorDeMensagens | Contrato para classificar texto antes do broadcast | ✅ |
 | server/Protocolo | Parsing das linhas de entrada | ✅ |
 | server/ClienteHandler | Uma conexão; `Runnable` + `ConexaoCliente` | ✅ |
 | server/Servidor | `ServerSocket`, `accept()`, `main` (montagem), `iniciar/parar` | ✅ |
@@ -69,7 +70,9 @@ Entregáveis: código ✅ · `schema.sql` ✅ · README ✅ · relatório final 
 | client/gui/CapturarComponentes, CapturarTelas (test/manual) | Geração de PNG em `BufferedImage`, não executadas pela suíte | ✅ |
 | infraestrutura/ia/ConfiguracaoIA | Lê `GROQ_API_KEY` e os dois modelos configurados | ✅ |
 | infraestrutura/ia/ClienteGroq | Chat completions, timeout, erros HTTP/rede, 429 sem retry | ✅ |
-| test/ia/ConectividadeManualGroq | Quatro usos: 3 responderam; moderação bloqueada (HTTP 403) | 🟡 |
+| infraestrutura/ia/ModeradorGroq, ModeradorResiliente | Safeguard estrito e liberação com aviso em falha | ✅ |
+| test/support/ModeradorFalso | Classificação configurável sem rede | ✅ |
+| test/ia/ConectividadeManualGroq | Moderação e os outros três modelos responderam no teste manual | ✅ |
 | config/Config | Lê `chat.properties` com valores padrão | ✅ |
 | resources/schema.sql, chat.properties | Script da tabela; configuração | ✅ |
 | test/support/InMemoryMensagemRepository, FakeConexao | Dublês de teste | ✅ |
@@ -80,6 +83,7 @@ Entregáveis: código ✅ · `schema.sql` ✅ · README ✅ · relatório final 
 - Nome de usuário: não vazio, sem espaços, até 20 caracteres, **único sem diferenciar maiúsculas**. Conteúdo: até 500 caracteres, com `trim`.
 - Mensagem de chat vai a **todos, inclusive o remetente**. Avisos de entrada/saída não são persistidos.
 - `ChatService.ordemLock`: salvar+broadcast e registrar+histórico são seções críticas (ordem de locks: `ordemLock` -> registry).
+- A chamada de moderação ocorre antes do `ordemLock`; se falhar, libera a mensagem e registra aviso. A conexão que enviou aguarda a resposta/timeout de até 90 s, sem segurar o lock e sem paralisar as demais.
 - Núcleo só tem o comando `/quit`. Extras (F1, M4, D10...) ficam para depois do marco.
 
 ## Comandos

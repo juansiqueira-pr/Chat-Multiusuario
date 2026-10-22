@@ -4,8 +4,11 @@ import br.unicesumar.chat.model.Mensagem;
 import br.unicesumar.chat.model.MensagemInvalidaException;
 import br.unicesumar.chat.model.Usuario;
 import br.unicesumar.chat.model.UsuarioInvalidoException;
+import br.unicesumar.chat.infraestrutura.ia.FalhaInferenciaException;
+import br.unicesumar.chat.infraestrutura.ia.ModeradorResiliente;
 import br.unicesumar.chat.support.FakeConexao;
 import br.unicesumar.chat.support.InMemoryMensagemRepository;
+import br.unicesumar.chat.support.ModeradorFalso;
 import org.junit.jupiter.api.Test;
 
 import java.time.Clock;
@@ -43,6 +46,108 @@ class ChatServiceTest {
         assertEquals(List.of("olá"), servico.buscarHistorico().stream().map(Mensagem::getConteudo).toList());
         assertTrue(ana.linhas().contains(salva.formatar()));
         assertTrue(bruno.linhas().contains(salva.formatar()));
+    }
+
+    @Test
+    void mensagemNormalPassaPelaModeracaoEChegaAosClientes() throws Exception {
+        InMemoryMensagemRepository repositorio = new InMemoryMensagemRepository();
+        ClientRegistry registro = new ClientRegistry();
+        FakeConexao ana = conexao("ana");
+        FakeConexao bruno = conexao("bruno");
+        registro.adicionar(ana);
+        registro.adicionar(bruno);
+        ModeradorFalso moderador = new ModeradorFalso(false);
+        ChatService servico = servico(repositorio, registro, moderador);
+
+        Mensagem salva = servico.enviarMensagem(ana.getUsuario(), "boa noite");
+
+        assertEquals("boa noite", salva.getConteudo());
+        assertEquals(List.of("boa noite"), repositorio.buscarUltimas(10).stream()
+                .map(Mensagem::getConteudo).toList());
+        assertTrue(ana.linhas().contains(salva.formatar()));
+        assertTrue(bruno.linhas().contains(salva.formatar()));
+        assertEquals(List.of("boa noite"), moderador.mensagensAnalisadas());
+    }
+
+    @Test
+    void mensagemOfensivaNaoEGravadaNemEnviadaAosOutros() throws Exception {
+        InMemoryMensagemRepository repositorio = new InMemoryMensagemRepository();
+        ClientRegistry registro = new ClientRegistry();
+        FakeConexao ana = conexao("ana");
+        FakeConexao bruno = conexao("bruno");
+        registro.adicionar(ana);
+        registro.adicionar(bruno);
+        ChatService servico = servico(repositorio, registro, new ModeradorFalso(true));
+
+        Mensagem resultado = servico.enviarMensagem(ana.getUsuario(), "texto ofensivo");
+
+        assertEquals(null, resultado);
+        assertTrue(repositorio.buscarUltimas(10).isEmpty());
+        assertTrue(ana.linhas().contains("! sua mensagem foi bloqueada por conter conteúdo ofensivo"));
+        assertFalse(bruno.linhas().stream().anyMatch(linha -> linha.contains("texto ofensivo")));
+    }
+
+    @Test
+    void falhaDeModeracaoLiberaMensagemSemInterromperChat() throws Exception {
+        InMemoryMensagemRepository repositorio = new InMemoryMensagemRepository();
+        ClientRegistry registro = new ClientRegistry();
+        FakeConexao ana = conexao("ana");
+        FakeConexao bruno = conexao("bruno");
+        registro.adicionar(ana);
+        registro.adicionar(bruno);
+        ModeradorResiliente moderador = new ModeradorResiliente(texto -> {
+            throw new FalhaInferenciaException(429, "limite do modelo atingido");
+        });
+        ChatService servico = servico(repositorio, registro, moderador);
+
+        Mensagem salva = servico.enviarMensagem(ana.getUsuario(), "mensagem liberada");
+
+        assertEquals("mensagem liberada", salva.getConteudo());
+        assertTrue(ana.linhas().contains(salva.formatar()));
+        assertTrue(bruno.linhas().contains(salva.formatar()));
+    }
+
+    @Test
+    void moderacaoLentaNaoSeguraLockQueImpedeOutroBroadcast() throws Exception {
+        ClientRegistry registro = new ClientRegistry();
+        FakeConexao ana = conexao("ana");
+        registro.adicionar(ana);
+        CountDownLatch moderacaoIniciada = new CountDownLatch(1);
+        CountDownLatch concluirModeracao = new CountDownLatch(1);
+        ModeradorDeMensagens moderador = texto -> {
+            moderacaoIniciada.countDown();
+            try {
+                if (!concluirModeracao.await(5, TimeUnit.SECONDS)) {
+                    throw new AssertionError("A liberação do moderador expirou.");
+                }
+            } catch (InterruptedException excecao) {
+                Thread.currentThread().interrupt();
+                throw new AssertionError(excecao);
+            }
+            return false;
+        };
+        ChatService servico = servico(new InMemoryMensagemRepository(), registro, moderador);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            java.util.concurrent.Future<?> envio = executor.submit(() -> {
+                try {
+                    servico.enviarMensagem(ana.getUsuario(), "mensagem");
+                } catch (MensagemInvalidaException excecao) {
+                    throw new AssertionError(excecao);
+                }
+            });
+            assertTrue(moderacaoIniciada.await(2, TimeUnit.SECONDS));
+
+            executor.submit(() -> servico.broadcast("chat continua"))
+                    .get(2, TimeUnit.SECONDS);
+            assertTrue(ana.linhas().contains("chat continua"));
+
+            concluirModeracao.countDown();
+            envio.get(2, TimeUnit.SECONDS);
+        } finally {
+            concluirModeracao.countDown();
+            executor.shutdownNow();
+        }
     }
 
     @Test
@@ -156,7 +261,12 @@ class ChatServiceTest {
     }
 
     private static ChatService servico(InMemoryMensagemRepository repositorio, ClientRegistry registro) {
-        return new ChatService(repositorio, registro, RELOGIO, 20);
+        return servico(repositorio, registro, new ModeradorFalso(false));
+    }
+
+    private static ChatService servico(InMemoryMensagemRepository repositorio, ClientRegistry registro,
+                                       ModeradorDeMensagens moderador) {
+        return new ChatService(repositorio, registro, RELOGIO, 20, moderador);
     }
 
     private static FakeConexao conexao(String nome) {

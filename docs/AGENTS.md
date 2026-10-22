@@ -47,13 +47,13 @@ Sem Spring, Hibernate/JPA, Lombok, Docker, mensageria nem `java.nio` Selector. `
 model/               Usuario, Mensagem, MensagemInvalidaException, UsuarioInvalidoException
 persistence/         MensagemRepository (interface), PersistenciaException
 persistence/jdbc/    JdbcMensagemRepository, ConnectionFactory, InicializadorSchema   <- ÚNICO lugar com java.sql
-service/             ChatService, ClientRegistry, ConexaoCliente (interface), FalhaEnvioException, NomeEmUsoException
+service/             ChatService, ClientRegistry, ConexaoCliente, ModeradorDeMensagens, exceções
 server/              Servidor (tem o main), ClienteHandler, Protocolo                 <- ÚNICO lugar com Socket no servidor
 client/              ClienteChat (tem o main)
 config/              Config
-infraestrutura/ia/   ConfiguracaoIA, ClienteGroq, FalhaInferenciaException
+infraestrutura/ia/   ConfiguracaoIA, ClienteGroq, ModeradorGroq, ModeradorResiliente, FalhaInferenciaException
 src/main/resources/  schema.sql, chat.properties
-src/test/java/...    model/ service/ persistence/ integracao/ support/ (InMemoryMensagemRepository, FakeConexao)
+src/test/java/...    model/ service/ persistence/ integracao/ support/ (InMemoryMensagemRepository, FakeConexao, ModeradorFalso)
 ```
 
 Nova classe ou pacote só se houver uma responsabilidade nova de verdade.
@@ -72,7 +72,7 @@ persistence/jdbc --> persistence (interface), model
 
 - Proibido: `model` importar JDBC, Socket, arquivos ou outras camadas; `service` importar `java.net`, `java.sql`, `ClienteHandler` ou `JdbcMensagemRepository`; `client` importar `service` ou `persistence`; SQL fora de `persistence/jdbc`.
 - Exceção aprovada para a base de IA: somente `infraestrutura/ia` pode importar `java.net.URI` e `java.net.http.*` para acessar APIs de inferência externas. `Dotenv` só pode ser chamado por `ConfiguracaoIA`; nenhum outro código pode ler chaves de IA diretamente.
-- Inversão de dependência: `ChatService -> MensagemRepository <- JdbcMensagemRepository` e `ChatService -> ConexaoCliente <- ClienteHandler`. As implementações concretas são criadas em **um único ponto de montagem** (`Servidor.main`) e injetadas pelo construtor.
+- Inversão de dependência: `ChatService -> MensagemRepository <- JdbcMensagemRepository`, `ChatService -> ConexaoCliente <- ClienteHandler` e `ChatService -> ModeradorDeMensagens <- ModeradorGroq`. As implementações concretas são criadas em **um único ponto de montagem** (`Servidor.main`) e injetadas pelo construtor.
 - Exceções: de negócio (`MensagemInvalida`, `UsuarioInvalido`, `NomeEmUso`) estendem `Exception`; de infraestrutura (`PersistenciaException`, `FalhaEnvioException`) estendem `RuntimeException`.
 - Regra prática: socket não conhece SQL; repository não conhece socket; model não conhece nenhum dos dois; service conecta as partes.
 
@@ -84,6 +84,7 @@ Estado compartilhado: `ClientRegistry` (principal) e `ClienteHandler.enviar()` (
 - **Broadcast** percorre o snapshot e **nunca segura lock do registry durante o envio**.
 - **`ClienteHandler.enviar()` é `synchronized`** (várias threads escrevem no mesmo `PrintWriter`). Falha de escrita (`checkError`/`IOException`) lança `FalhaEnvioException`; o `ChatService` remove aquela conexão e **continua** o broadcast para as demais.
 - **Ordem**: o `ChatService` tem um lock privado (`ordemLock`) que faz de **salvar + broadcast** uma seção crítica única, e também de **registrar + enviar histórico** em `conectar()`. Assim a ordem do banco é a ordem que os clientes veem, e ninguém perde nem duplica mensagem ao entrar. Trade-off a documentar: perde paralelismo e um cliente lento atrasa os demais. Ordem de aquisição: `ordemLock` -> lock do registry, nunca o inverso.
+- **Moderação de IA**: a consulta externa acontece antes de adquirir `ordemLock`; uma resposta lenta não segura o lock de persistência/broadcast e não impede outros clientes de enviar mensagens. Após a classificação, mensagens permitidas entram no lock para salvar e transmitir em ordem. Em erro, o wrapper fail-open libera e registra aviso; o thread daquela conexão aguarda a resposta ou timeout HTTP (90 s), mas os outros clientes continuam processando mensagens.
 - **JDBC**: uma `Connection` por operação, fechada com try-with-resources. Nunca compartilhe `Connection`.
 - Sem campo `static` mutável. Sem `Thread.sleep` para "sincronizar" (nem em testes: use `CountDownLatch` ou espera por condição com timeout). Threads com nome (`cliente-N`).
 - `desconectar()` é **idempotente** (só avisa a saída se de fato removeu). `ClienteHandler.run()` termina sempre em `finally { desconectar; fechar socket }`. Exceção de um cliente nunca escapa para o servidor.
