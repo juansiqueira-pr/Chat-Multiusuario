@@ -10,19 +10,23 @@ public final class Config {
     private static final String URL_PADRAO = "jdbc:h2:./data/chat";
     private static final String USUARIO_PADRAO = "sa";
     private static final int HISTORICO_PADRAO = 20;
+    private static final int CLIMA_INTERVALO_PADRAO = 5;
 
     private final int porta;
     private final String bancoUrl;
     private final String bancoUsuario;
     private final String bancoSenha;
     private final int historicoTamanho;
+    private final int climaIntervaloMensagens;
 
-    private Config(int porta, String bancoUrl, String bancoUsuario, String bancoSenha, int historicoTamanho) {
+    private Config(int porta, String bancoUrl, String bancoUsuario, String bancoSenha, int historicoTamanho,
+                   int climaIntervaloMensagens) {
         this.porta = porta;
         this.bancoUrl = bancoUrl;
         this.bancoUsuario = bancoUsuario;
         this.bancoSenha = bancoSenha;
         this.historicoTamanho = historicoTamanho;
+        this.climaIntervaloMensagens = climaIntervaloMensagens;
     }
 
     /** Carrega as propriedades do recurso chat.properties ou usa os padrões. */
@@ -42,18 +46,22 @@ public final class Config {
         }
         int porta = inteiro(propriedades.getProperty("porta"), PORTA_PADRAO);
         int historico = inteiro(propriedades.getProperty("historico.tamanho"), HISTORICO_PADRAO);
+        int climaIntervalo = inteiro(propriedades.getProperty("clima.intervalo.mensagens"),
+                CLIMA_INTERVALO_PADRAO);
         if (porta < 0 || porta > 65535) {
             porta = PORTA_PADRAO;
         }
         if (historico < 0) {
             historico = HISTORICO_PADRAO;
         }
+        if (climaIntervalo < 1) climaIntervalo = CLIMA_INTERVALO_PADRAO;
         return new Config(
                 porta,
                 propriedades.getProperty("banco.url", URL_PADRAO),
                 propriedades.getProperty("banco.usuario", USUARIO_PADRAO),
                 propriedades.getProperty("banco.senha", ""),
-                historico);
+                historico,
+                climaIntervalo);
     }
 
     /** Retorna a porta TCP configurada. */
@@ -80,6 +88,9 @@ public final class Config {
     public int getHistoricoTamanho() {
         return historicoTamanho;
     }
+
+    /** Retorna o intervalo de mensagens entre análises do clima. */
+    public int getClimaIntervaloMensagens() { return climaIntervaloMensagens; }
 
     private static int inteiro(String valor, int padrao) {
         if (valor == null) {

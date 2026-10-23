@@ -45,6 +45,14 @@ class LinhaServidorTest {
     }
 
     @Test
+    void interpretaEventoDeClimaSemMisturarComMensagemDeChat() {
+        LinhaServidor linha = LinhaServidor.interpretar("* clima: TENSO");
+
+        assertEquals(LinhaServidor.Tipo.CLIMA, linha.tipo());
+        assertEquals("TENSO", linha.texto());
+    }
+
+    @Test
     void linhaInesperadaViraSistemaSemLancarExcecao() {
         assertEquals(LinhaServidor.Tipo.SISTEMA,
                 LinhaServidor.interpretar("conteúdo [livre]: qualquer").tipo());

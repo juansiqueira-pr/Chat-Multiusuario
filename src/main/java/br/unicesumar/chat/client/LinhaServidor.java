@@ -13,7 +13,7 @@ public record LinhaServidor(Tipo tipo, String remetente, LocalTime horario, Stri
     private static final DateTimeFormatter HORA = DateTimeFormatter.ofPattern("HH:mm");
 
     /** Tipos de linha enviados pelo servidor. */
-    public enum Tipo { MENSAGEM, SISTEMA, ERRO, ACEITE }
+    public enum Tipo { MENSAGEM, SISTEMA, ERRO, ACEITE, CLIMA }
 
     /** Interpreta uma linha sem propagar erros de formato. */
     public static LinhaServidor interpretar(String linha) {
@@ -22,6 +22,9 @@ public record LinhaServidor(Tipo tipo, String remetente, LocalTime horario, Stri
         if (segura.startsWith("* Conectado como ")) {
             String nome = segura.substring("* Conectado como ".length());
             return new LinhaServidor(Tipo.ACEITE, nome, null, nome, segura);
+        }
+        if (segura.startsWith("* clima: ")) {
+            return new LinhaServidor(Tipo.CLIMA, "", null, segura.substring("* clima: ".length()), segura);
         }
         if (segura.startsWith("* ")) return new LinhaServidor(Tipo.SISTEMA, "", null, segura.substring(2), segura);
         Matcher matcher = MENSAGEM.matcher(segura);

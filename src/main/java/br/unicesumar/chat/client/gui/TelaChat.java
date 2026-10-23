@@ -19,6 +19,7 @@ public final class TelaChat extends JPanel {
     private final FundoFuturista fundo = new FundoFuturista();
     private final ListaMensagens mensagens;
     private final CampoMensagem campo;
+    private final BarraClima barraClima = new BarraClima();
     private final JLabel titulo = new JLabel("Chat ao vivo");
     private final JLabel identidade = new JLabel("Conectando…");
     private final JLabel status = new JLabel("Desconectado");
@@ -44,7 +45,12 @@ public final class TelaChat extends JPanel {
         JPanel conteudo = new JPanel(new BorderLayout(0, 12));
         conteudo.setOpaque(false);
         conteudo.setBorder(BorderFactory.createEmptyBorder(18, 26, 18, 26));
-        conteudo.add(criarCabecalho(), BorderLayout.NORTH);
+        JPanel topo = new JPanel(new BorderLayout(0, 10));
+        topo.setOpaque(false);
+        topo.add(criarCabecalho(), BorderLayout.NORTH);
+        barraClima.setBorder(BorderFactory.createEmptyBorder(2, 0, 4, 0));
+        topo.add(barraClima, BorderLayout.SOUTH);
+        conteudo.add(topo, BorderLayout.NORTH);
         conteudo.add(mensagens, BorderLayout.CENTER);
         conteudo.add(campo, BorderLayout.SOUTH);
         fundo.setLayout(new BorderLayout());
@@ -116,6 +122,10 @@ public final class TelaChat extends JPanel {
 
     /** Insere uma linha recebida e separa o histórico das mensagens ao vivo. */
     public void adicionar(LinhaServidor linha) {
+        if (linha.tipo() == LinhaServidor.Tipo.CLIMA) {
+            setNivelClima(linha.texto());
+            return;
+        }
         if (!historicoSeparado && linha.tipo() == LinhaServidor.Tipo.SISTEMA
                 && linha.texto().equalsIgnoreCase(nick + " entrou")) {
             mensagens.adicionarSeparadorHistorico();
@@ -123,6 +133,9 @@ public final class TelaChat extends JPanel {
         }
         mensagens.adicionar(linha);
     }
+
+    /** Exibe o nível recebido do servidor, encaminhando atualizações para a EDT. */
+    public void setNivelClima(String nivel) { barraClima.setNivel(nivel); }
 
     /** Atualiza fundo, textos e componentes de mensagem para o modo claro/escuro. */
     public void setTemaClaro(boolean claro) {
@@ -132,6 +145,7 @@ public final class TelaChat extends JPanel {
         titulo.setForeground(texto);
         identidade.setForeground(claro ? new Color(0x667085) : Tema.SECUNDARIO);
         mensagens.setTemaClaro(claro);
+        barraClima.setTemaClaro(claro);
         campo.setTemaClaro(claro);
         reconectar.setForeground(texto);
         botaoTema.repaint();

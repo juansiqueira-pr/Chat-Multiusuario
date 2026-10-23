@@ -17,6 +17,7 @@ class ConfigTest {
         assertEquals("sa", config.getBancoUsuario());
         assertEquals("", config.getBancoSenha());
         assertEquals(20, config.getHistoricoTamanho());
+        assertEquals(5, config.getClimaIntervaloMensagens());
     }
 
     @Test
@@ -28,6 +29,7 @@ class ConfigTest {
         assertEquals("sa", config.getBancoUsuario());
         assertEquals("", config.getBancoSenha());
         assertEquals(20, config.getHistoricoTamanho());
+        assertEquals(5, config.getClimaIntervaloMensagens());
     }
 
     @Test
@@ -38,5 +40,12 @@ class ConfigTest {
         assertEquals(0, config.getPorta());
         assertEquals(3, config.getHistoricoTamanho());
         assertEquals("jdbc:h2:./data/chat", config.getBancoUrl());
+    }
+
+    @Test
+    void permiteConfigurarIntervaloDeAnaliseDoClima() {
+        byte[] bytes = "clima.intervalo.mensagens=8\n".getBytes(StandardCharsets.UTF_8);
+
+        assertEquals(8, Config.carregar(new ByteArrayInputStream(bytes)).getClimaIntervaloMensagens());
     }
 }

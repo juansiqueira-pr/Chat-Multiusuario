@@ -4,12 +4,14 @@ import br.unicesumar.chat.model.Mensagem;
 import br.unicesumar.chat.model.MensagemInvalidaException;
 import br.unicesumar.chat.model.Usuario;
 import br.unicesumar.chat.model.UsuarioInvalidoException;
+import br.unicesumar.chat.model.NivelClima;
 import br.unicesumar.chat.infraestrutura.ia.FalhaInferenciaException;
 import br.unicesumar.chat.infraestrutura.ia.ModeradorResiliente;
 import br.unicesumar.chat.support.FakeConexao;
 import br.unicesumar.chat.support.InMemoryMensagemRepository;
 import br.unicesumar.chat.support.ModeradorFalso;
 import br.unicesumar.chat.support.ResumidorFalso;
+import br.unicesumar.chat.support.AnalisadorDeClimaFalso;
 import org.junit.jupiter.api.Test;
 
 import java.time.Clock;
@@ -22,6 +24,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -158,6 +162,119 @@ class ChatServiceTest {
     }
 
     @Test
+    void climaEReavaliadoApenasACadaCincoMensagensEAtualizaTodos() throws Exception {
+        ClientRegistry registro = new ClientRegistry();
+        FakeConexao ana = conexao("ana");
+        FakeConexao bruno = conexao("bruno");
+        registro.adicionar(ana);
+        registro.adicionar(bruno);
+        AnalisadorDeClimaFalso analisador = new AnalisadorDeClimaFalso(NivelClima.CALMO);
+        ChatService servico = servico(new InMemoryMensagemRepository(), registro,
+                new ModeradorFalso(false), analisador, 5);
+
+        for (int indice = 0; indice < 4; indice++) servico.enviarMensagem(ana.getUsuario(), "mensagem " + indice);
+        assertEquals(0, analisador.chamadas());
+        servico.enviarMensagem(ana.getUsuario(), "mensagem 4");
+
+        assertEquals(1, analisador.chamadas());
+        assertEquals(5, analisador.mensagensRecebidas().size());
+        assertEquals(NivelClima.CALMO, servico.getNivelClima());
+        assertTrue(ana.linhas().contains("* clima: CALMO"));
+        assertTrue(bruno.linhas().contains("* clima: CALMO"));
+    }
+
+    @Test
+    void analiseDeClimaUsaSomenteAsUltimasCinquentaMensagens() throws Exception {
+        InMemoryMensagemRepository repositorio = new InMemoryMensagemRepository();
+        AnalisadorDeClimaFalso analisador = new AnalisadorDeClimaFalso(NivelClima.NEUTRO);
+        ChatService servico = servico(repositorio, new ClientRegistry(), new ModeradorFalso(false), analisador, 55);
+
+        for (int indice = 0; indice < 55; indice++) {
+            servico.enviarMensagem(usuario("ana"), "mensagem-" + indice);
+        }
+
+        assertEquals(1, analisador.chamadas());
+        assertEquals(50, analisador.mensagensRecebidas().size());
+        assertEquals("mensagem-5", analisador.mensagensRecebidas().getFirst().getConteudo());
+        assertEquals("mensagem-54", analisador.mensagensRecebidas().getLast().getConteudo());
+    }
+
+    @Test
+    void analisesConcorrentesSaoAplicadasNaOrdemSemSegurarLockDasMensagens() throws Exception {
+        CountDownLatch primeiraAnaliseIniciada = new CountDownLatch(1);
+        CountDownLatch liberarPrimeiraAnalise = new CountDownLatch(1);
+        CountDownLatch segundaMensagemEntregue = new CountDownLatch(1);
+        AtomicInteger chamadas = new AtomicInteger();
+        CopyOnWriteArrayList<String> linhas = new CopyOnWriteArrayList<>();
+        Usuario ana = usuario("ana");
+        ConexaoCliente conexao = new ConexaoCliente() {
+            @Override public Usuario getUsuario() { return ana; }
+            @Override public void enviar(String linha) {
+                linhas.add(linha);
+                if (linha.contains(": dois")) segundaMensagemEntregue.countDown();
+            }
+        };
+        ClientRegistry registro = new ClientRegistry();
+        registro.adicionar(conexao);
+        AnalisadorDeClima analisador = mensagens -> {
+            if (chamadas.getAndIncrement() == 0) {
+                primeiraAnaliseIniciada.countDown();
+                try {
+                    if (!liberarPrimeiraAnalise.await(3, TimeUnit.SECONDS)) {
+                        throw new AssertionError("A primeira análise não foi liberada.");
+                    }
+                } catch (InterruptedException excecao) {
+                    Thread.currentThread().interrupt();
+                    throw new AssertionError(excecao);
+                }
+                return NivelClima.TENSO;
+            }
+            return NivelClima.CALMO;
+        };
+        ChatService servico = servico(new InMemoryMensagemRepository(), registro,
+                new ModeradorFalso(false), analisador, 1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            var primeira = executor.submit(() -> servico.enviarMensagem(ana, "um"));
+            assertTrue(primeiraAnaliseIniciada.await(2, TimeUnit.SECONDS));
+            var segunda = executor.submit(() -> servico.enviarMensagem(ana, "dois"));
+            assertTrue(segundaMensagemEntregue.await(2, TimeUnit.SECONDS),
+                    "a segunda mensagem precisa ser transmitida enquanto a primeira análise espera");
+            assertFalse(segunda.isDone(), "a segunda análise aguarda a chamada em andamento");
+
+            liberarPrimeiraAnalise.countDown();
+            primeira.get(2, TimeUnit.SECONDS);
+            segunda.get(2, TimeUnit.SECONDS);
+
+            assertEquals(NivelClima.CALMO, servico.getNivelClima());
+            assertTrue(linhas.indexOf("* clima: TENSO") < linhas.indexOf("* clima: CALMO"));
+        } finally {
+            liberarPrimeiraAnalise.countDown();
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void falhaNaAnaliseMantemUltimoClimaConhecidoEChatContinua() throws Exception {
+        ClientRegistry registro = new ClientRegistry();
+        FakeConexao ana = conexao("ana");
+        registro.adicionar(ana);
+        AnalisadorDeClimaFalso analisador = new AnalisadorDeClimaFalso(NivelClima.TENSO);
+        ChatService servico = servico(new InMemoryMensagemRepository(), registro,
+                new ModeradorFalso(false), analisador, 2);
+
+        servico.enviarMensagem(ana.getUsuario(), "um");
+        servico.enviarMensagem(ana.getUsuario(), "dois");
+        assertEquals(NivelClima.TENSO, servico.getNivelClima());
+        analisador.falharCom(new br.unicesumar.chat.infraestrutura.ia.FalhaInferenciaException("indisponível", null));
+        servico.enviarMensagem(ana.getUsuario(), "três");
+        servico.enviarMensagem(ana.getUsuario(), "quatro");
+
+        assertEquals(NivelClima.TENSO, servico.getNivelClima());
+        assertTrue(ana.linhas().stream().anyMatch(linha -> linha.contains(": quatro")));
+    }
+
+    @Test
     void moderacaoLentaNaoSeguraLockQueImpedeOutroBroadcast() throws Exception {
         ClientRegistry registro = new ClientRegistry();
         FakeConexao ana = conexao("ana");
@@ -256,6 +373,25 @@ class ChatServiceTest {
     }
 
     @Test
+    void falhaAoEnviarNivelInicialRemoveConexaoSemPropagarErro() throws Exception {
+        Usuario ana = usuario("ana");
+        ConexaoCliente falhaNoClima = new ConexaoCliente() {
+            @Override public Usuario getUsuario() { return ana; }
+            @Override public void enviar(String linha) {
+                if (linha.startsWith("* clima:")) {
+                    throw new br.unicesumar.chat.service.FalhaEnvioException("socket fechado");
+                }
+            }
+        };
+        ClientRegistry registro = new ClientRegistry();
+        ChatService servico = servico(new InMemoryMensagemRepository(), registro);
+
+        servico.conectar(falhaNoClima);
+
+        assertTrue(registro.snapshot().isEmpty());
+    }
+
+    @Test
     void desconectarEIdempotenteEAvisaSomenteNaPrimeiraRemocao() throws Exception {
         ClientRegistry registro = new ClientRegistry();
         FakeConexao ana = conexao("ana");
@@ -317,6 +453,13 @@ class ChatServiceTest {
     private static ChatService servico(InMemoryMensagemRepository repositorio, ClientRegistry registro,
                                        ModeradorDeMensagens moderador) {
         return new ChatService(repositorio, registro, RELOGIO, 20, moderador);
+    }
+
+    private static ChatService servico(InMemoryMensagemRepository repositorio, ClientRegistry registro,
+                                       ModeradorDeMensagens moderador,
+                                       br.unicesumar.chat.service.AnalisadorDeClima analisador, int intervalo) {
+        return new ChatService(repositorio, registro, RELOGIO, 20, moderador,
+                mensagens -> "Resumo", pergunta -> "Resposta", analisador, intervalo);
     }
 
     private static FakeConexao conexao(String nome) {

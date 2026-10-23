@@ -13,6 +13,9 @@ class TemaVisualTest {
         assertEquals(0xA5B7B5, rgb(Tema.SECUNDARIO));
         assertEquals(0x4FC3A1, rgb(Tema.CIANO));
         assertEquals(0xE98B68, rgb(Tema.CORAL));
+        assertEquals(0x4FC3A1, rgb(Tema.CLIMA_CALMO));
+        assertEquals(0xE9B44C, rgb(Tema.CLIMA_NEUTRO));
+        assertEquals(0xE47773, rgb(Tema.CLIMA_TENSO));
     }
 
     private int rgb(java.awt.Color cor) {

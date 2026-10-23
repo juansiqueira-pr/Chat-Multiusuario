@@ -296,3 +296,14 @@ Formato de cada entrada (copie e preencha; mantenha curto):
 - **Resultado:** `mvn -q test` passou com 83 testes, 0 falhas, 0 erros e 0 ignorados (66 unitários/visuais/arquitetura + 17 integrações). O comando exibiu avisos de envio em sockets fechados e de falhas simuladas nos testes; a suíte terminou com código 0.
 - **Revisão visual:** captura headless atualizada e revisada. O resumo longo aparece em cartão com quebra em três linhas, cabeçalho e contraste compatível com a identidade atual.
 - **Próximo passo:** reiniciar a interface Swing para carregar a versão atualizada e experimentar `/historico`.
+
+### 2026-10-22 · Termômetro do clima da conversa
+
+- **Adicionado:** `NivelClima` (CALMO, NEUTRO, TENSO), contrato `AnalisadorDeClima`, `AnalisadorDeClimaGroq` com o modelo já configurado em `ia.modelo.clima` e `AnalisadorDeClimaFalso` para testes locais. A saída do modelo só é aceita se corresponder exatamente a uma categoria.
+- **Integração:** `ChatService` conta mensagens persistidas e, a cada 5, copia as últimas 50 sob `ordemLock`; chama o analisador depois de liberar esse lock. Sucesso atualiza e envia `* clima: NIVEL`; falha é registrada e conserva o nível anterior. O servidor envia o nível atual ao cliente que entra.
+- **Interface:** `BarraClima` aparece no topo da tela, usa cores centralizadas em `Tema` e apresenta apenas o nível recebido. `TelaChat` encaminha as atualizações pela EDT; linhas de clima não entram na lista de mensagens. A captura headless foi atualizada e revisada.
+- **Concorrência:** contagem e sequência são protegidas por `ordemLock`; `analiseClimaLock` serializa chamadas sem segurar o lock do chat. Números de sequência impedem que um resultado antigo sobrescreva outro mais recente. `ChatServiceTest.analisesConcorrentesSaoAplicadasNaOrdemSemSegurarLockDasMensagens` valida que outra mensagem é transmitida durante a análise bloqueada e que o resultado final mantém a ordem.
+- **Corrida adicional:** conexão pode fechar durante o envio do nível inicial. O serviço remove essa conexão e registra a falha sem deixar a exceção escapar; `ChatServiceTest.falhaAoEnviarNivelInicialRemoveConexaoSemPropagarErro` cobre o caso.
+- **Testes:** `AnalisadorDeClimaGroqTest` cobre classificação, prompt e saída inválida; `ChatServiceTest` cobre intervalo, amostra de 50, falha sem reset e concorrência; `LinhaServidorTest`, `ConfigTest` e `BarraClimaVisualTest` cobrem o evento, configuração e EDT. `mvn -q test`: 94 testes, 0 falhas, 0 erros e 0 ignorados (77 unitários/visuais/arquitetura + 17 integrações).
+- **Limite:** a chamada Groq é síncrona na thread que atinge o intervalo e pode aguardar o timeout configurado; `ordemLock` fica livre, então outras conexões seguem enviando mensagens. Não foi feita chamada real à API nesta etapa.
+- **Próximo passo:** validar a barra numa janela Swing e, se desejado, executar um teste manual com a chave Groq local.

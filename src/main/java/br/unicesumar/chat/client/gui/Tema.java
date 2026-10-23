@@ -19,6 +19,9 @@ public final class Tema {
     public static final Color CORAL = new Color(0xE98B68);
     public static final Color SUCESSO = new Color(0x4FC3A1);
     public static final Color ERRO = new Color(0xE47773);
+    public static final Color CLIMA_CALMO = new Color(0x4FC3A1);
+    public static final Color CLIMA_NEUTRO = new Color(0xE9B44C);
+    public static final Color CLIMA_TENSO = new Color(0xE47773);
     private static final List<String> FONTES = List.of(
             "SF Pro Display", "SF Pro Text", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", "Inter"
     );

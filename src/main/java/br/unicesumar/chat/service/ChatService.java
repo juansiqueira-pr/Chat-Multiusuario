@@ -2,6 +2,7 @@ package br.unicesumar.chat.service;
 
 import br.unicesumar.chat.model.Mensagem;
 import br.unicesumar.chat.model.MensagemInvalidaException;
+import br.unicesumar.chat.model.NivelClima;
 import br.unicesumar.chat.model.Usuario;
 import br.unicesumar.chat.persistence.MensagemRepository;
 
@@ -17,6 +18,7 @@ public final class ChatService {
     public static final String PREFIXO_SISTEMA = "* ";
     public static final String PREFIXO_ERRO = "! ";
     private static final int LIMITE_MENSAGENS_RESUMO = 50;
+    private static final int LIMITE_MENSAGENS_CLIMA = 50;
 
     private final MensagemRepository repositorio;
     private final ClientRegistry registro;
@@ -25,7 +27,15 @@ public final class ChatService {
     private final ModeradorDeMensagens moderador;
     private final ResumidorDeConversa resumidor;
     private final AssistenteTecnico assistenteTecnico;
+    private final AnalisadorDeClima analisadorDeClima;
+    private final int intervaloAnaliseClima;
     private final Object ordemLock = new Object();
+    private final Object analiseClimaLock = new Object();
+    private volatile NivelClima nivelClima = NivelClima.NEUTRO;
+    private int mensagensDesdeAnaliseClima;
+    private long sequenciaAnaliseClima;
+    private long ultimaAnaliseClimaIniciada;
+    private long ultimaAnaliseClimaAplicada;
     private final Logger registrador = Logger.getLogger(ChatService.class.getName());
 
     /** Cria o serviço com repositório, registry, relógio e limite de histórico. */
@@ -53,6 +63,15 @@ public final class ChatService {
     public ChatService(MensagemRepository repositorio, ClientRegistry registro, Clock relogio,
                        int tamanhoHistorico, ModeradorDeMensagens moderador,
                        ResumidorDeConversa resumidor, AssistenteTecnico assistenteTecnico) {
+        this(repositorio, registro, relogio, tamanhoHistorico, moderador, resumidor, assistenteTecnico,
+                mensagens -> NivelClima.NEUTRO, Integer.MAX_VALUE);
+    }
+
+    /** Cria o serviço com analisador de clima e intervalo de atualização configurados. */
+    public ChatService(MensagemRepository repositorio, ClientRegistry registro, Clock relogio,
+                       int tamanhoHistorico, ModeradorDeMensagens moderador,
+                       ResumidorDeConversa resumidor, AssistenteTecnico assistenteTecnico,
+                       AnalisadorDeClima analisadorDeClima, int intervaloAnaliseClima) {
         this.repositorio = Objects.requireNonNull(repositorio);
         this.registro = Objects.requireNonNull(registro);
         this.relogio = Objects.requireNonNull(relogio);
@@ -60,6 +79,9 @@ public final class ChatService {
         this.moderador = Objects.requireNonNull(moderador);
         this.resumidor = Objects.requireNonNull(resumidor);
         this.assistenteTecnico = Objects.requireNonNull(assistenteTecnico);
+        this.analisadorDeClima = Objects.requireNonNull(analisadorDeClima);
+        if (intervaloAnaliseClima < 1) throw new IllegalArgumentException("intervaloAnaliseClima deve ser positivo.");
+        this.intervaloAnaliseClima = intervaloAnaliseClima;
     }
 
     /** Registra a conexão, confirma o nick, envia o histórico e anuncia a entrada em ordem única. */
@@ -79,6 +101,12 @@ public final class ChatService {
                 return;
             }
             broadcast(PREFIXO_SISTEMA + cliente.getUsuario().getNome() + " entrou");
+            try {
+                cliente.enviar(PREFIXO_SISTEMA + "clima: " + nivelClima.name());
+            } catch (FalhaEnvioException excecao) {
+                registro.remover(cliente);
+                registrador.log(Level.WARNING, "Cliente removido após falha ao receber o clima atual.", excecao);
+            }
         }
     }
 
@@ -101,11 +129,21 @@ public final class ChatService {
             }
             return null;
         }
+        List<Mensagem> amostraClima = null;
+        long sequenciaClima = 0;
+        Mensagem salva;
         synchronized (ordemLock) {
-            Mensagem salva = repositorio.salvar(mensagem);
+            salva = repositorio.salvar(mensagem);
             broadcast(salva.formatar());
-            return salva;
+            mensagensDesdeAnaliseClima++;
+            if (mensagensDesdeAnaliseClima >= intervaloAnaliseClima) {
+                mensagensDesdeAnaliseClima = 0;
+                amostraClima = repositorio.buscarUltimas(LIMITE_MENSAGENS_CLIMA);
+                sequenciaClima = ++sequenciaAnaliseClima;
+            }
         }
+        if (amostraClima != null) analisarClima(amostraClima, sequenciaClima);
+        return salva;
     }
 
     private void avisarRemetente(Usuario remetente, String aviso) {
@@ -160,6 +198,31 @@ public final class ChatService {
     /** Consulta o assistente técnico fora do lock de ordenação do chat. */
     public String consultarAssistente(String pergunta) {
         return assistenteTecnico.responder(Objects.requireNonNull(pergunta));
+    }
+
+    /** Retorna o último clima classificado com sucesso. */
+    public NivelClima getNivelClima() { return nivelClima; }
+
+    private void analisarClima(List<Mensagem> mensagens, long sequencia) {
+        synchronized (analiseClimaLock) {
+            if (sequencia <= ultimaAnaliseClimaIniciada) return;
+            ultimaAnaliseClimaIniciada = sequencia;
+            NivelClima analisado;
+            try {
+                analisado = Objects.requireNonNull(analisadorDeClima.analisar(mensagens),
+                        "analisador de clima retornou null");
+            } catch (RuntimeException excecao) {
+                registrador.log(Level.WARNING, "Análise de clima indisponível; mantendo o último nível conhecido.",
+                        excecao);
+                return;
+            }
+            synchronized (ordemLock) {
+                if (sequencia <= ultimaAnaliseClimaAplicada) return;
+                ultimaAnaliseClimaAplicada = sequencia;
+                nivelClima = analisado;
+                broadcast(PREFIXO_SISTEMA + "clima: " + analisado.name());
+            }
+        }
     }
 
     private List<Mensagem> buscarHistoricoSemLock() {

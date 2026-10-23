@@ -35,6 +35,7 @@ public final class CapturarTelas {
                 chat.adicionar(LinhaServidor.interpretar("* ana entrou"));
                 chat.adicionar(LinhaServidor.interpretar("[13/10 09:31] bruno: Também gostei. A conversa fica clara e leve."));
                 chat.adicionar(LinhaServidor.interpretar("[13/10 09:32] ana: E o histórico aparece quando alguém entra."));
+                chat.adicionar(LinhaServidor.interpretar("* clima: CALMO"));
                 String[] mensagens = {"Já encontrei o material da aula.", "Vou compartilhar o resumo aqui.",
                         "Perfeito, vou conferir.", "A atividade ficou para sexta.", "Obrigado pelo aviso.",
                         "Combinado. Até mais tarde.", "O histórico já está atualizado.", "Boa noite, pessoal."};

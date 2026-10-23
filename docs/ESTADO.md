@@ -2,10 +2,10 @@
 
 > Mapa compacto do estado atual; histórico de mudanças em `RELATORIO_DESENVOLVIMENTO.md`.
 
-**Atualizado em:** 2026-10-22 · **Fase atual:** resumo privado `/historico`
+**Atualizado em:** 2026-10-22 · **Fase atual:** termômetro do clima
 **Marco "núcleo obrigatório completo":** ✅ atingido
-**Testes:** `mvn -q test` passou: 83 testes, 0 falhas, 0 erros, 0 ignorados (66 unitários/visuais/arquitetura + 17 integrações).
-**Próximo passo:** implementar termômetro do clima quando solicitado.
+**Testes:** `mvn -q test` passou: 94 testes, 0 falhas, 0 erros, 0 ignorados (77 unitários/visuais/arquitetura + 17 integrações).
+**Próximo passo:** validar a barra em uma janela Swing e fazer uma chamada real ao Groq quando desejado.
 
 ## Requisitos obrigatórios
 
@@ -45,6 +45,7 @@ Vídeo com 3+ clientes: ⬜ responsabilidade do aluno. Marco de núcleo completo
 - Assistente técnico: `AssistenteTecnico`, `AssistenteTecnicoGroq`; `/hacker <pergunta>` consulta o modelo configurado para orientação educativa/defensiva e responde apenas ao solicitante.
 - Interface `/hacker`: `ListaMensagens` apresenta a resposta em cartão próprio com largura adaptável, quebra automática, texto selecionável e cores para os temas claro/escuro (`ListaMensagensVisualTest`).
 - Interface `/historico`: `ListaMensagens` apresenta o resumo em cartão próprio com título, largura adaptável, quebra automática e texto selecionável; também substitui o estado vazio da conversa (`ListaMensagensVisualTest`).
+- Termômetro: `NivelClima`, `AnalisadorDeClimaGroq` e `ChatService` classificam as últimas 50 mensagens a cada 5 mensagens novas; erros mantêm o último nível. `BarraClima` mostra CALMO/NEUTRO/TENSO sem analisar conteúdo (`ChatServiceTest`, `AnalisadorDeClimaGroqTest`, `BarraClimaVisualTest`).
 - Configuração de IA: `ConfiguracaoIA` lê `GROQ_API_KEY`; `ClienteGroq` centraliza HTTP e tratamento de rede, timeout e erros da API.
 - Falhas de resumo/assistente: exceções específicas geram aviso privado; outras conexões continuam ativas.
 - Testes da etapa: `ChatServiceTest`, `ResumidorGroqTest`, `ProtocoloTest` e `ServidorIntegracaoTest` cobrem limite de 50 mensagens, prompt geral, histórico vazio, aliases do comando, privacidade e falha controlada. `ResumidorFalso` evita rede nos testes de serviço.
@@ -53,9 +54,10 @@ Vídeo com 3+ clientes: ⬜ responsabilidade do aluno. Marco de núcleo completo
 
 - JDK 21 no ambiente atual; Maven; H2 em `./data/chat`; porta padrão `5555`; histórico padrão de 20 mensagens.
 - `ChatService.ordemLock` protege persistência+broadcast e conexão+histórico; resumo copia até 50 mensagens sob lock e chama a IA fora dele.
+- A contagem das mensagens e a cópia das 50 usadas no termômetro ficam sob `ordemLock`; a inferência usa um lock separado e não bloqueia novas mensagens. Sequências impedem que uma classificação antiga sobrescreva uma nova.
 - Uma espera Groq pode pausar a thread do cliente solicitante por até 90 s; outras conexões não aguardam esse lock.
 - Moderação e resumo exigem `GROQ_API_KEY` em `.env`; sem chave, moderação opera fail-open e resumo informa indisponibilidade.
-- Comandos implementados: `/quit`, `/historico`, `/histórico` e `/hacker <pergunta>`; o termômetro permanece pendente.
+- Comandos implementados: `/quit`, `/historico`, `/histórico` e `/hacker <pergunta>`; o termômetro é atualizado automaticamente, sem comando.
 
 ## Como executar
 
@@ -66,6 +68,6 @@ Vídeo com 3+ clientes: ⬜ responsabilidade do aluno. Marco de núcleo completo
 ## Pendências conhecidas
 
 - Fazer o vídeo acadêmico com três ou mais clientes.
-- Implementar o termômetro em etapa futura, mediante solicitação.
+- O termômetro consulta o Groq sincronamente na thread do remetente a cada 5 mensagens; enquanto aguarda, outras conexões continuam trocando mensagens.
 - O prompt do `/hacker` solicita uso apenas educativo/autorizado e recusa orientação a ataques reais; isso é uma regra de comportamento do modelo, não um controle de acesso ou garantia de segurança.
 - Quebras de linha do editor Swing são convertidas em espaços porque o protocolo TCP usa uma linha por mensagem.
